@@ -5,6 +5,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 public class main {
+	@RequestMapping(value = "/main")
+	public String mainLoad() {
+		return "main";
+	}
+	
 	@RequestMapping(value = "/index")
 	public String index() {
 		return "index";
