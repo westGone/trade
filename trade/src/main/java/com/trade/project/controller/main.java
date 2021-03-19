@@ -15,6 +15,11 @@ public class main {
 		return "index";
 	}
 	
+	@RequestMapping(value = "/settings")
+	public String settings() {
+		return "settings";
+	}
+	
 	@RequestMapping(value = "/accordion")
 	public String accordion() {
 		return "accordion";

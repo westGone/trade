@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>Material Able bootstrap admin template by Codedthemes</title>
+    <title>Daily Investment Info admin template by westGone</title>
     <!-- HTML5 Shim and Respond.js IE10 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 10]>
@@ -145,7 +145,7 @@
                                         <div class="media">
                                             <img class="d-flex align-self-center img-radius" src="/images/avatar-2.jpg" alt="Generic placeholder image">
                                             <div class="media-body">
-                                                <h5 class="notification-user">John Doe</h5>
+                                                <h5 class="notification-user">Jiwon Seo</h5>
                                                 <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
                                                 <span class="notification-time">30 minutes ago</span>
                                             </div>
@@ -153,7 +153,7 @@
                                     </li>
                                     <li class="waves-effect waves-light">
                                         <div class="media">
-                                            <img class="d-flex align-self-center img-radius" src="/images/avatar-4.jpg" alt="Generic placeholder image">
+                                            <img class="d-flex align-self-center img-radius" src="/images/user-img.jpg" alt="Generic placeholder image">
                                             <div class="media-body">
                                                 <h5 class="notification-user">Joseph William</h5>
                                                 <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
@@ -175,8 +175,8 @@
                             </li>
                             <li class="user-profile header-notification">
                                 <a href="#!" class="waves-effect waves-light">
-                                    <img src="/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
-                                    <span>John Doe</span>
+                                    <img src="/images/user-img.jpg" class="img-radius" alt="User-Profile-Image">
+                                    <span>Jiwon Seo</span>
                                     <i class="ti-angle-down"></i>
                                 </a>
                                 <ul class="show-notification profile-notification">
@@ -219,9 +219,9 @@
                         <div class="pcoded-inner-navbar main-menu">
                             <div class="">
                                 <div class="main-menu-header">
-                                    <img class="img-80 img-radius" src="/images/avatar-4.jpg" alt="User-Profile-Image">
+                                    <img class="img-80 img-radius" src="/images/user-img.jpg" alt="User-Profile-Image">
                                     <div class="user-details">
-                                        <span id="more-details">John Doe<i class="fa fa-caret-down"></i></span>
+                                        <span id="more-details">Jiwon Seo<i class="fa fa-caret-down"></i></span>
                                     </div>
                                 </div>
                                 <div class="main-menu-content">
@@ -431,143 +431,53 @@
                                     <!-- Page-body start -->
                                     <div class="page-body">
                                         <div class="row">
+                                        	<!-- Trade Viewer Start -->
+											<div class="col-xl-12 col-md-24">
+												<div class="card table-card">
+													<div class="card-header">
+	                                                    <h5>Trading Chart</h5>
+	                                                    <div class="card-header-right">
+	                                                        <ul class="list-unstyled card-option">
+	                                                            <li><i class="fa fa fa-wrench open-card-option"></i></li>
+	                                                            <li><i class="fa fa-window-maximize full-card"></i></li>
+	                                                            <li><i class="fa fa-minus minimize-card"></i></li>
+	                                                            <li><i class="fa fa-refresh reload-card"></i></li>
+	                                                            <li><i class="fa fa-trash close-card"></i></li>
+	                                            			</ul>
+	                                            		</div>
+													</div>
+													<div class="tradingview-widget-container">
+														<div id="tradingview_88dab"></div>
+															<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+															<script type="text/javascript">
+																new TradingView.widget(
+																	{
+																	"width" : 1590,
+																	"height" : 800,
+																	"symbol": "BITSTAMP:BTCUSD",
+																	"interval": "5",
+																	"timezone": "Asia/Seoul",
+																	"theme": "light",
+																	"style": "1",
+																  		"locale": "kr",
+																	  	"toolbar_bg": "#f1f3f6",
+																	  	"enable_publishing": false,
+																	"hide_side_toolbar": false,
+																	"allow_symbol_change": true,
+																	"details": true,
+																	"studies": [
+																	"DM@tv-basicstudies",
+																	"PSAR@tv-basicstudies"
+																	],
+																	"container_id": "tradingview_1174c"
+																	}
+																);
+															</script>
+													</div>
+												</div>
+											</div>
+											<!-- TradingView Widget END -->
                                             <!-- Material statustic card start -->
-                                            <div class="col-xl-4 col-md-12">
-                                                <div class="card mat-stat-card">
-                                                    <div class="card-block">
-                                                        <div class="row align-items-center b-b-default">
-                                                            <div class="col-sm-6 b-r-default p-b-20 p-t-20">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="far fa-user text-c-purple f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>10K</h5>
-                                                                        <p class="text-muted m-b-0">Visitors</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-sm-6 p-b-20 p-t-20">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="fas fa-volume-down text-c-green f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>100%</h5>
-                                                                        <p class="text-muted m-b-0">Volume</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row align-items-center">
-                                                            <div class="col-sm-6 p-b-20 p-t-20 b-r-default">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="far fa-file-alt text-c-red f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>2000+</h5>
-                                                                        <p class="text-muted m-b-0">Files</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-sm-6 p-b-20 p-t-20">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="far fa-envelope-open text-c-blue f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>120</h5>
-                                                                        <p class="text-muted m-b-0">Mails</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-xl-4 col-md-12">
-                                                <div class="card mat-stat-card">
-                                                    <div class="card-block">
-                                                        <div class="row align-items-center b-b-default">
-                                                            <div class="col-sm-6 b-r-default p-b-20 p-t-20">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="fas fa-share-alt text-c-purple f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>1000</h5>
-                                                                        <p class="text-muted m-b-0">Share</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-sm-6 p-b-20 p-t-20">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="fas fa-sitemap text-c-green f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>600</h5>
-                                                                        <p class="text-muted m-b-0">Network</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row align-items-center">
-                                                            <div class="col-sm-6 p-b-20 p-t-20 b-r-default">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="fas fa-signal text-c-red f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>350</h5>
-                                                                        <p class="text-muted m-b-0">Returns</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-sm-6 p-b-20 p-t-20">
-                                                                <div class="row align-items-center text-center">
-                                                                    <div class="col-4 p-r-0">
-                                                                        <i class="fas fa-wifi text-c-blue f-24"></i>
-                                                                    </div>
-                                                                    <div class="col-8 p-l-0">
-                                                                        <h5>100%</h5>
-                                                                        <p class="text-muted m-b-0">Connections</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-xl-4 col-md-12">
-                                                <div class="card mat-clr-stat-card text-white green ">
-                                                    <div class="card-block">
-                                                        <div class="row">
-                                                            <div class="col-3 text-center bg-c-green">
-                                                                <i class="fas fa-star mat-icon f-24"></i>
-                                                            </div>
-                                                            <div class="col-9 cst-cont">
-                                                                <h5>4000+</h5>
-                                                                <p class="m-b-0">Ratings Received</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card mat-clr-stat-card text-white blue">
-                                                    <div class="card-block">
-                                                        <div class="row">
-                                                            <div class="col-3 text-center bg-c-blue">
-                                                                <i class="fas fa-trophy mat-icon f-24"></i>
-                                                            </div>
-                                                            <div class="col-9 cst-cont">
-                                                                <h5>17</h5>
-                                                                <p class="m-b-0">Achievements</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
                                             <!-- Material statustic card end -->
                                             <!-- order-visitor start -->
 
@@ -575,6 +485,214 @@
                                             <!-- order-visitor end -->
 
                                             <!--  sale analytics start -->
+                                            <div class="col-xl-6 col-md-12">
+		                                        <div class="card">
+		                                            <div class="card-header">
+		                                                <h5>Hover Table</h5>
+		                                                <div class="card-header-right">
+		                                                    <ul class="list-unstyled card-option">
+		                                                        <li><i class="fa fa fa-wrench open-card-option"></i></li>
+		                                                        <li><i class="fa fa-window-maximize full-card"></i></li>
+		                                                        <li><i class="fa fa-minus minimize-card"></i></li>
+		                                                        <li><i class="fa fa-refresh reload-card"></i></li>
+		                                                        <li><i class="fa fa-trash close-card"></i></li>
+		                                                    </ul>
+		                                                </div>
+		                                            </div>
+		                                            <div class="card-block table-border-style">
+		                                                <div class="table-responsive">
+		                                                    <table class="table table-hover">
+		                                                        <tbody>
+		                                                            <tr>
+		                                                                <td>Mark</td>
+		                                                                <td>Otto</td>
+		                                                                <td>@mdo</td>
+		                                                            </tr>
+		                                                            <tr>
+		                                                                <td>Jacob</td>
+		                                                                <td>Thornton</td>
+		                                                                <td>@fat</td>
+		                                                            </tr>
+		                                                            <tr>
+		                                                                <td>Larry</td>
+		                                                                <td>the Bird</td>
+		                                                                <td>@twitter</td>
+		                                                            </tr>
+		                                                            <tr>
+		                                                                <td>Larry</td>
+		                                                                <td>the Bird</td>
+		                                                                <td>@twitter</td>
+		                                                            </tr>
+		                                                            <tr>
+		                                                                <td>Larry</td>
+		                                                                <td>the Bird</td>
+		                                                                <td>@twitter</td>
+		                                                            </tr>
+		                                                        </tbody>
+		                                                    </table>
+		                                                </div>
+		                                            </div>
+		                                        </div>
+                                            </div>
+                                            <div class="col-xl-6 col-md-12">
+                                            	<div class="card">
+		                                            <div class="card-header">
+		                                                <h5>Hover Table</h5>
+		                                                <div class="card-header-right">
+		                                                    <ul class="list-unstyled card-option">
+		                                                        <li><i class="fa fa fa-wrench open-card-option"></i></li>
+		                                                        <li><i class="fa fa-window-maximize full-card"></i></li>
+		                                                        <li><i class="fa fa-minus minimize-card"></i></li>
+		                                                        <li><i class="fa fa-refresh reload-card"></i></li>
+		                                                        <li><i class="fa fa-trash close-card"></i></li>
+		                                                    </ul>
+		                                                </div>
+		                                            </div>
+                                                    <!-- Nav tabs -->
+                                                    <ul class="nav nav-tabs md-tabs" role="tablist">
+                                                        <li class="nav-item">
+                                                            <a class="nav-link active" data-toggle="tab" href="#home3" role="tab">Home</a>
+                                                            <div class="slide"></div>
+                                                        </li>
+                                                        <li class="nav-item">
+                                                            <a class="nav-link" data-toggle="tab" href="#profile3" role="tab">Profile</a>
+                                                            <div class="slide"></div>
+                                                        </li>
+                                                        <li class="nav-item">
+                                                            <a class="nav-link" data-toggle="tab" href="#messages3" role="tab">Messages</a>
+                                                            <div class="slide"></div>
+                                                        </li>
+                                                        <li class="nav-item">
+                                                            <a class="nav-link" data-toggle="tab" href="#settings3" role="tab">Settings</a>
+                                                            <div class="slide"></div>
+                                                        </li>
+                                                    </ul>
+                                                    <!-- Tab panes -->
+                                                    <div class="tab-content card-block">
+                                                        <div class="tab-pane active" id="home3" role="tabpanel">
+				                                            <div class="card-block table-border-style">
+				                                                <div class="table-responsive">
+				                                                    <table class="table table-hover">
+				                                                        <tbody>
+				                                                            <tr>
+				                                                                <td>Mark</td>
+				                                                                <td>Otto</td>
+				                                                                <td>@mdo</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Jacob</td>
+				                                                                <td>Thornton</td>
+				                                                                <td>@fat</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                        </tbody>
+				                                                    </table>
+				                                                </div>
+				                                            </div>
+                                                        </div>
+                                                        <div class="tab-pane" id="profile3" role="tabpanel">
+				                                            <div class="card-block table-border-style">
+				                                                <div class="table-responsive">
+				                                                    <table class="table table-hover">
+				                                                        <tbody>
+				                                                            <tr>
+				                                                                <td>Mark</td>
+				                                                                <td>Otto</td>
+				                                                                <td>@mdo</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Jacob</td>
+				                                                                <td>Thornton</td>
+				                                                                <td>@fat</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                        </tbody>
+				                                                    </table>
+				                                                </div>
+				                                            </div>
+                                                        </div>
+                                                        <div class="tab-pane" id="messages3" role="tabpanel">
+				                                            <div class="card-block table-border-style">
+				                                                <div class="table-responsive">
+				                                                    <table class="table table-hover">
+				                                                        <tbody>
+				                                                            <tr>
+				                                                                <td>Mark</td>
+				                                                                <td>Otto</td>
+				                                                                <td>@mdo</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Jacob</td>
+				                                                                <td>Thornton</td>
+				                                                                <td>@fat</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                        </tbody>
+				                                                    </table>
+				                                                </div>
+				                                            </div>
+                                                        </div>
+                                                        <div class="tab-pane" id="settings3" role="tabpanel">
+				                                            <div class="card-block table-border-style">
+				                                                <div class="table-responsive">
+				                                                    <table class="table table-hover">
+				                                                        <tbody>
+				                                                            <tr>
+				                                                                <td>Mark</td>
+				                                                                <td>Otto</td>
+				                                                                <td>@mdo</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Jacob</td>
+				                                                                <td>Thornton</td>
+				                                                                <td>@fat</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                            <tr>
+				                                                                <td>Larry</td>
+				                                                                <td>the Bird</td>
+				                                                                <td>@twitter</td>
+				                                                            </tr>
+				                                                        </tbody>
+				                                                    </table>
+				                                                </div>
+				                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            	</div>
+                                            </div>
                                             <div class="col-xl-6 col-md-12">
                                                 <div class="card table-card">
                                                     <div class="card-header">
@@ -596,7 +714,7 @@
                                                                     <tr>
                                                                         <td>
                                                                             <div class="d-inline-block align-middle">
-                                                                                <img src="/images/avatar-4.jpg" alt="user image" class="img-radius img-40 align-top m-r-15">
+                                                                                <img src="/images/user-img.jpg" alt="user image" class="img-radius img-40 align-top m-r-15">
                                                                                 <div class="d-inline-block">
                                                                                     <h6>Shirley Hoe</h6>
                                                                                     <p class="text-muted m-b-0">Sales executive , NY</p>
@@ -624,7 +742,7 @@
                                                                     <tr>
                                                                         <td>
                                                                             <div class="d-inline-block align-middle">
-                                                                                <img src="/images/avatar-4.jpg" alt="user image" class="img-radius img-40 align-top m-r-15">
+                                                                                <img src="/images/user-img.jpg" alt="user image" class="img-radius img-40 align-top m-r-15">
                                                                                 <div class="d-inline-block">
                                                                                     <h6>Shirley Hoe</h6>
                                                                                     <p class="text-muted m-b-0">Sales executive , NY</p>
