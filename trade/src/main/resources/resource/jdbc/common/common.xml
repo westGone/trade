@@ -1,0 +1,1869 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sqlList>
+	
+	<!-- Bsa 리스트 가져오기 -->
+	<method>
+		<sql id="getBsaList">
+			SELECT 	  bs.bsa_job_no
+					, bs.ent_code
+					, bs.ent_business_code
+					
+					, nvl(airline.ETC2 ,' ') || '-' || nvl(airline.code,' ')  etc2_airline_code	<!-- OZ-988 -->
+		        	, airline.etc2					as airline_code					<!-- IATA CODE : OZ -->
+		        	, airline.code 			 		as airline_code2				<!--  항공사 CODE : 988 --> 
+		        	, airline.name_default	 		as airline_name	
+		        	, airline.ETC2 || '.png' 		as logo_img_name
+					
+					, bs.status
+					, status.name_default	AS status_name
+					, 'Edit' 				AS status_edit
+					, bs.orig_code
+					, orig.name_default		AS orig_name
+					, bs.dest_code
+					, dest.name_default		AS dest_name
+					, nvl(bs.orig_code,' ') || ' / ' ||nvl(bs.dest_code,' ') AS orig_dest
+					, bs.flight_no
+					, bs.aircraft_type
+					, actype.name_default	AS aircraft_type_name
+					, bs.etd_date
+					, bs.etd_time
+					, bs.eta_date
+					, bs.eta_time
+					, bs.update_user_id
+					, reg.user_name 		AS register_user_name
+					, bs.register_date_time
+					, bs.update_date_time
+				    , upd.user_name 		AS update_user_name
+				    , CASE  WHEN TO_CHAR(bs.etd_date, 'd') = 1 THEN 'SUN'
+				            WHEN TO_CHAR(bs.etd_date, 'd') = 2 THEN 'MON'
+				            WHEN TO_CHAR(bs.etd_date, 'd') = 3 THEN 'TUE'
+				            WHEN TO_CHAR(bs.etd_date, 'd') = 4 THEN 'WED'
+				            WHEN TO_CHAR(bs.etd_date, 'd') = 5 THEN 'THU'
+				            WHEN TO_CHAR(bs.etd_date, 'd') = 6 THEN 'FRI'
+				            WHEN TO_CHAR(bs.etd_date, 'd') = 7 THEN 'SAT' END as DAY
+				      , case when od.bsa_job_no is  null then 'N' else 'Y' end as od_yn
+				      , (SELECT nvl(sum(gwt),0) FROM tb_fms_bsa_allotments ba WHERE bs.bsa_job_no = ba.bsa_job_no) pivot_wt
+				      , nvl(od.book_vwt,0)	book_vwt
+				      , nvl(od.book_gwt,0) book_gwt
+			   FROM tb_fms_bsa_status	bs
+		  LEFT JOIN tb_sms_code_detail	airline
+				 ON airline.ent_code 		= bs.ent_code
+				AND airline.use_yn 			= 'Y'
+				AND airline.group_code 		= 'SIGN_AIRLINE'
+				AND airline.code 			= bs.airline_code
+		  LEFT JOIN tb_sms_code_detail	actype
+				 ON actype.ent_code 		= bs.ent_code
+				AND actype.use_yn 			= 'Y'
+				AND actype.group_code 		= 'AIRCRAFT_TYPE'
+				AND actype.code 			= bs.aircraft_type	
+		  LEFT JOIN tb_sms_code_detail orig
+				 ON orig.ent_code 			= bs.ent_code
+				AND orig.use_yn 			= 'Y'
+				AND orig.group_code 		= 'CITY_PORT'
+				AND orig.code 				= bs.orig_code
+		  LEFT JOIN tb_sms_code_detail dest
+				 ON dest.ent_code 			= bs.ent_code
+				AND dest.use_yn 			= 'Y'
+				AND dest.group_code 		= 'CITY_PORT'
+				AND dest.code 				= bs.dest_code
+		  LEFT JOIN tb_sms_code_detail status
+				 ON status.ent_code 		= bs.ent_code
+				AND status.use_yn 			= 'Y'
+				AND status.group_code 		= 'BSA_STATUS'
+				AND status.code 			= bs.status
+           LEFT JOIN (
+           			SELECT  NVL((SUM(BK_VWT)),0)  - NVL(SUM(OFF_VWT),0) + (CASE WHEN MAX(ULDC.OFF_BUP_YN) = 'Y' THEN  SUM(BUP_VWT) ELSE 0 END) AS BOOK_VWT
+                          , NVL((SUM(BK_GWT)),0)  - NVL(SUM(OFF_GWT),0) + (CASE WHEN MAX(ULDC.OFF_BUP_YN) = 'Y' THEN  SUM(BUP_GWT) ELSE 0 END) AS BOOK_GWT   
+                          , OD.BSA_JOB_NO
+                          , od.ent_code
+                          , od.ent_business_code
+                       FROM TB_COM_OD     OD 
+                 INNER JOIN TB_COM_OD_BL  BL            ON BL.JOB_NO = OD.JOB_NO
+                  LEFT JOIN TB_FMS_BUP_OFF_CARGO OFC     
+                         ON OFC.ENT_CODE               = :srchEntCode
+                        AND OFC.ENT_BUSINESS_CODE      = :srchEntBusinessCode
+                        AND OFC.JOB_NO                 = OD.JOB_NO
+                  LEFT JOIN TB_FMS_BUP_ULD_CARGO ULDC   
+                         ON ULDC.ENT_CODE              = :srchEntCode
+                        AND ULDC.ENT_BUSINESS_CODE     = :srchEntBusinessCode
+                         AND ULDC.JOB_NO                = OD.JOB_NO
+                      WHERE OD.ENT_CODE                = :srchEntCode
+                        AND OD.ENT_BUSINESS_CODE       = :srchEntBusinessCode
+                   GROUP BY od.ent_code,od.ent_business_code, od.BSA_JOB_NO 
+           		)od 
+                 ON bs.ent_code             = od.ent_code
+                AND bs.ent_business_code    = od.ent_business_code
+                AND bs.bsa_job_no           = od.bsa_job_no
+		  LEFT JOIN tb_sms_user reg
+				 ON reg.user_id  			= bs.register_user_id
+				AND reg.ent_code 			= bs.ent_code
+		  LEFT JOIN tb_sms_user upd
+				 ON upd.user_id  			= bs.update_user_id
+				AND upd.ent_code 			= bs.ent_code
+		</sql>
+		<author>nlx</author>
+		<description>tb_fms_bsa_status List</description>
+	</method>
+	
+	<!-- Bsa 리스트 Splitter Grid 조회 , Entry화면 Grid 조회 동일 사용(TB_FMS_BSA_ALLOTMENTS) -->
+	<method>
+		<sql id="getBsaAllotmentList">
+			SELECT bsa_job_no
+					, seq_no
+					, uld_gubun
+					, uld_position
+					, position.name_default 	AS position_name
+					, uld_cnt
+					, uld_contour
+					, uld_size_type
+					, uldsz.name_default		AS uld_size_type_name
+					, contour.name_default 		AS contour_name
+					, gwt
+					, vwt
+			FROM TB_FMS_BSA_ALLOTMENTS ba
+			  LEFT JOIN tb_sms_code_detail  position
+					 ON position.ent_code	= :srchEntCode
+					AND position.use_yn 	= 'Y'
+					AND position.group_code = 'ULD_POSITION'
+					AND position.code 		= ba.ULD_POSITION	
+			 LEFT JOIN tb_sms_code_detail   contour
+					 ON contour.ent_code	= :srchEntCode
+					AND contour.use_yn 		= 'Y'
+					AND contour.group_code 	= 'ULD_CONTOUR'
+					AND contour.code 		= ba.ULD_CONTOUR	
+			 LEFT OUTER 
+			 JOIN	TB_SMS_CODE_DETAIL	ULDSZ
+			 	ON	ULDSZ.ENT_CODE		= :srchEntCode
+				AND ULDSZ.GROUP_CODE 	= 'ULD_SIZE_TYPE'
+				AND ULDSZ.CODE 			= BA.ULD_SIZE_TYPE
+				AND ULDSZ.USE_YN 		= 'Y'
+		</sql>
+		<author>nlx</author>
+		<description>tb_fms_bsa_status List</description>
+	</method>
+	
+	<!-- Bsa 정보 가져오기 -->
+	<method>
+		<sql id="getBsaInfo">
+			SELECT 	  bs.bsa_job_no
+					, bs.ent_code
+					, bs.ent_business_code
+					
+					, airline.etc2					as agent_code					<!-- IATA CODE : OZ -->
+			        , airline.code 					as agent_code2					<!--  항공사 CODE : 988 --> 
+			        , airline.name_default			as agent_name
+			       
+					, bs.status
+					, status.name_default			as status_name
+					, bs.orig_code
+					, orig.name_default				as orig_name
+					, bs.dest_code
+					, dest.name_default				as dest_name
+					, bs.flight_no
+					, bs.aircraft_type				as ac_type 
+					, actype.name_default			as aircraft_type_name
+					, bs.etd_date
+					, bs.etd_time
+					, bs.eta_date
+					, bs.eta_time
+					, bs.eta_date - bs.etd_date		as day 
+					, bs.update_user_id
+					, reg.user_name 				as register_user_name
+					, bs.register_date_time
+					, bs.update_date_time
+				    , upd.user_name 				as update_user_name
+				    , bs.product_type
+				    , product_type.name_default 	as product_name
+				    , bs.ltc_type
+			        , bs.special_code
+			        , GET_SPECIAL_HANDLING_3CODE(bs.ent_code, bs.SPECIAL_CODE) special3_code
+				    , bs.team_code 					as csTeamCode
+				    , (select case when count(*) > 0 then 'Y' else 'N' end od_yn 
+				         from tb_com_od 
+				        where ent_code = bs.ent_code 
+				          and ent_business_code = bs.ent_business_code 
+				          and bsa_job_no = bs.bsa_job_no ) od_yn
+			   FROM tb_fms_bsa_status	bs
+		  LEFT JOIN tb_sms_code_detail	airline
+				 ON airline.ent_code 		= bs.ent_code
+				AND airline.use_yn 			= 'Y'
+				AND airline.group_code 		= 'SIGN_AIRLINE'
+				AND airline.code 			= bs.airline_code
+		  LEFT JOIN tb_sms_code_detail	actype
+				 ON actype.ent_code 		= bs.ent_code
+				AND actype.use_yn 			= 'Y'
+				AND actype.group_code 		= 'AIRCRAFT_TYPE'
+				AND actype.code 			= bs.aircraft_type	
+		  LEFT JOIN tb_sms_code_detail orig
+				 ON orig.ent_code 			= bs.ent_code
+				AND orig.use_yn 			= 'Y'
+				AND orig.group_code 		= 'CITY_PORT'
+				AND orig.code 				= bs.orig_code
+		  LEFT JOIN tb_sms_code_detail dest
+				 ON dest.ent_code 			= bs.ent_code
+				AND dest.use_yn 			= 'Y'
+				AND dest.group_code 		= 'CITY_PORT'
+				AND dest.code 				= bs.dest_code
+		  LEFT JOIN tb_sms_code_detail status
+				 ON status.ent_code 		= bs.ent_code
+				AND status.use_yn 			= 'Y'
+				AND status.group_code 		= 'STATUS_ORDER_CARGO'
+				AND status.code 			= bs.status
+		 LEFT JOIN tb_sms_code_detail product_type
+			    ON product_type.ent_code	= bs.ent_code
+               AND product_type.use_yn     	= 'Y'
+               AND product_type.group_code 	= 'ALLOT_PRODUCT'
+               AND product_type.code 	  	= bs.product_type
+		  LEFT JOIN tb_sms_user reg
+				 ON reg.user_id  			= bs.register_user_id
+				AND reg.ent_code 			= bs.ent_code
+		  LEFT JOIN tb_sms_user upd
+				 ON upd.user_id  			= bs.update_user_id
+				AND upd.ent_code 			= bs.ent_code
+		      WHERE bs.ent_code 			= :srchEntCode
+			    AND bs.ent_business_code 	= :srchEntBusinessCode
+		   #where#
+		 #loadMod#
+		</sql>
+		<author>nlx</author>
+		<description>tb_fms_bsa_status Info</description>
+	</method>
+	
+	<!-- Bsa Status 수정  -->
+	<method>
+		<sql id="updateBsaStatus">
+			UPDATE tb_fms_bsa_status 
+			   SET status    			= :status    
+			 WHERE ent_code 			= :entCode
+			   AND ent_business_code 	= :entBusinessCode
+			   AND bsa_job_no			= :bsaJobNo
+		</sql>
+		<author>nlx</author>
+		<description>Update tb_fms_bsa_status SQL</description>
+	</method>
+	
+	<!-- Bsa PK 생성  -->
+	<method>
+		<sql id="makeBsaJobNo">
+ 		SELECT 
+			   TO_CHAR(sysdate, 'yyyyMM')
+			   ||'-'
+			   ||LPAD(NVL((SELECT MAX(CEIL(SUBSTR(bsa_job_no, 10, 6))) + 1 from TB_FMS_BSA_STATUS
+			                where bsa_job_no like  to_char(sysdate, 'yyyyMM')||'-'||'%'), 1)
+			     , 6, '0') AS BSA_JOB_NO
+			from dual
+		</sql>
+		<author>nlx</author>
+		<description>make TB_FMS_BSA_STATUS SQL</description>
+	</method>
+	
+	<!-- bsa 중복여부  판단  -->
+	<method>
+		<sql id="getBsaInfoChk">
+ 		SELECT count(*) AS cnt
+          FROM tb_fms_bsa_status
+         WHERE ent_code 		 = :entCode
+           AND ent_business_code = :entBusinessCode
+           AND airline_code 	 = :airlineCode2
+           AND flight_no 		 = :flightNo
+           AND etd_date 		 = :etdDate
+		</sql>
+		<author>nlx</author>
+		<description>bsa 중복여부  판단</description>
+	</method>
+	
+	<!-- Bsa List 화면에서 보는 allotmentApply 파업 에서 BSA생성하기전에 생성해야 할 일자 조회 해오기   -->
+	<method>
+		<sql id="getCreateBsaDate">
+			<![CDATA[
+			SELECT TO_CHAR(DT,'YYYY-MM-DD') DT, TO_CHAR(DT, 'dy') AS DY
+			  FROM	(
+						SELECT TO_DATE(:startDate, 'YYYY-MM-DD') + LEVEL - 1 AS DT
+						FROM   DUAL
+						CONNECT BY LEVEL < 1000
+					) TBL
+					, (
+						SELECT 	  :monYn AS MO
+								, :tueYn AS TU
+								, :wedYn AS WE
+								, :thuYn AS TH
+								, :friYn AS FR
+								, :satYn AS SA
+								, :sunYn AS SU 
+						  FROM DUAL
+					) DAYS
+			 WHERE  DT >= TO_DATE(:startDate, 'YYYY-MM-DD')
+			   AND  DT <= TO_DATE(:endDate, 'YYYY-MM-DD')
+			   AND  CASE 	WHEN TO_CHAR(DT, 'd') = 1 THEN DAYS.SU
+							WHEN TO_CHAR(DT, 'd') = 2 THEN DAYS.MO
+							WHEN TO_CHAR(DT, 'd') = 3 THEN DAYS.TU
+							WHEN TO_CHAR(DT, 'd') = 4 THEN DAYS.WE
+							WHEN TO_CHAR(DT, 'd') = 5 THEN DAYS.TH
+							WHEN TO_CHAR(DT, 'd') = 6 THEN DAYS.FR
+							WHEN TO_CHAR(DT, 'd') = 7 THEN DAYS.SA END = 'Y'
+		]]>
+		</sql>
+		<author>nlx</author>
+		<description> List</description>
+	</method>
+	
+	<!-- Bsa List 화면에서 보는  allotmentApply 파업 에서 다건 BSA 생성    -->
+	<method>
+		<sql id="insertBsaStatusBath">
+			INSERT INTO TB_FMS_BSA_STATUS
+					   ( BSA_JOB_NO
+					   , ENT_CODE
+					   , ENT_BUSINESS_CODE
+					   , AIRLINE_CODE
+					   , STATUS
+					   , ORIG_CODE
+					   , DEST_CODE
+					   , FLIGHT_NO
+					   , AIRCRAFT_TYPE
+					   , ETD_DATE
+					   , ETD_TIME
+					   , ETA_DATE
+					   , ETA_TIME
+					   , REGISTER_USER_ID
+					   , REGISTER_DATE_TIME
+					   , UPDATE_USER_ID
+					   , UPDATE_DATE_TIME
+					   , LTC_TYPE 
+					   , PRODUCT_TYPE
+					   , SPECIAL_CODE
+					   , TEAM_CODE 
+					   , ALLOTMENT_JOB_NO
+					   )
+			     SELECT :bsaJobNo
+					   , ent_code
+					   , ent_business_code
+					   , airline_code
+					   , '00'
+					   , orig_code
+					   , dest_code
+					   , flight_no
+					   , aircraft_type
+					   , :etdDate
+					   , '00:00'
+					   , :etdDate
+					   , '00:00'
+					   , TO_NCHAR(:registerUserId)
+					   , sysdate + (:gmtTime/24)
+				       , TO_NCHAR(:updateUserId)
+				       , sysdate + (:gmtTime/24)
+				       , ltc_type
+				       , product_type
+				       , special_code
+				       , team_code
+				       , allotment_job_no
+			   FROM tb_fms_allotment 
+			  WHERE allotment_job_no = :allotmentJobNo
+		</sql>
+		<author>nlx</author>
+		<description>Insert TB_FMS_BSA_STATUS SQL</description>
+	</method>
+	
+	<!-- Bsa List 화면에서 보는  allotmentApply 파업 에서 다건 BSA 생성     -->
+	<method>
+		<sql id="insertBsaAllotmentBath">
+		INSERT INTO TB_FMS_BSA_ALLOTMENTS
+				  ( BSA_JOB_NO
+				  ,	SEQ_NO
+				  , ULD_POSITION
+				  , ULD_CNT
+				  , ULD_CONTOUR
+				  , GWT
+				  , VWT
+				  , ULD_SIZE_TYPE
+				  , ULD_GUBUN
+				  )
+			 SELECT :bsaJobNo
+				  , SEQ_NO
+				  , ULD_POSITION
+				  , ULD_COUNT
+				  , ULD_CONTOUR
+				  , CONTRACT_WT
+				  , CONTRACT_VOLUME
+				  , ULD_SIZE_TYPE
+				  , ULD_GUBUN
+			   FROM TB_FMS_ALLOTMENT_DETAIL 
+			  WHERE ALLOTMENT_JOB_NO = :allotmentJobNo
+		</sql>
+		<author>nlx</author>
+		<description>Insert TB_FMS_BSA_ALLOTMENTS SQL</description>
+	</method>
+	
+	<!-- Bsa Entry 화면에서 TB_FMS_BSA_STATUS 단일 건 생성 -->
+	<method>
+		<sql id="insertBsaStatusSingle">
+			INSERT INTO TB_FMS_BSA_STATUS
+					   ( BSA_JOB_NO
+					   , ENT_CODE
+					   , ENT_BUSINESS_CODE
+					   , AIRLINE_CODE
+					   , STATUS
+					   , ORIG_CODE
+					   , DEST_CODE
+					   , FLIGHT_NO
+					   , AIRCRAFT_TYPE
+					   , ETD_DATE
+					   , ETD_TIME
+					   , ETA_DATE
+					   , ETA_TIME
+					   , REGISTER_USER_ID
+					   , REGISTER_DATE_TIME
+					   , UPDATE_USER_ID
+					   , UPDATE_DATE_TIME
+					   , LTC_TYPE 
+					   , PRODUCT_TYPE
+					   , SPECIAL_CODE
+					   , TEAM_CODE 
+				)VALUES(
+						:bsaJobNo
+					  , :entCode
+					  , :entBusinessCode
+					  , :agentCode2	 <!-- 항공사 CODE : 988 -->
+					  , :status
+					  , :origCode
+					  , :destCode
+					  , :flightNo
+					  , :acType
+					  , :etdDate
+					  , :etdTime
+					  , :etaDate
+					  , :etaTime
+					  , TO_NCHAR(:registerUserId)
+					  , sysdate + (:gmtTime/24)
+					  , TO_NCHAR(:updateUserId)
+					  , sysdate + (:gmtTime/24)
+					  , :ltcType
+				      , :productType
+				      , :specialCode
+				      , :csTeamCode
+				)
+		</sql>
+		<author>nlx</author>
+		<description>Insert TB_FMS_BSA_STATUS SQL</description>
+	</method>
+	
+	<!-- Bsa Entry 화면에서 업데이트 시 삭제하고 다시 ARRAY로 TB_FMS_BSA_ALLOTMENTS INSERT    -->
+	<method>
+		<sql id="insertBsaAllotmentArray">
+		INSERT INTO TB_FMS_BSA_ALLOTMENTS
+				  ( BSA_JOB_NO
+				  ,	SEQ_NO
+				  , ULD_POSITION
+				  , ULD_CNT
+				  , ULD_CONTOUR
+				  , GWT
+				  , VWT
+				  , ULD_SIZE_TYPE
+				  , ULD_GUBUN
+			)VALUES(
+					:bsaJobNo
+				  , :seqNo
+				  , :uldPosition
+				  , :uldCnt
+				  , :uldContour
+				  , :gwt
+				  , :vwt
+				  , :uldSizeType
+				  , :uldGubun
+			)			
+		</sql>
+		<author>nlx</author>
+		<description>Insert TB_FMS_BSA_ALLOTMENTS SQL</description>
+	</method>
+	
+	<!-- Bsa 대상관리 TB_FMS_BSA_STATUS 삭제   -->
+	<method>
+		<sql id="deleteStatus">
+			DELETE 
+			  FROM TB_FMS_BSA_STATUS
+			 WHERE bsa_job_no 			= TO_NCHAR(:bsaJobNo)
+			   AND ent_code 			= :entCode
+			   AND ent_business_code 	= :entBusinessCode
+		</sql>
+		<author>nlx</author>
+		<description>delete tb_fms_bsa_status sql</description>
+	</method>
+	
+	<!-- Bsa 대상 ALLOTMENTS 관리 , TB_FMS_BSA_ALLOTMENTS 삭제    -->
+	<method>
+		<sql id="deleteAllotment">
+			DELETE 
+			  FROM TB_FMS_BSA_ALLOTMENTS
+			 WHERE bsa_job_no 			= TO_NCHAR(:bsaJobNo)
+		</sql>
+		<author>nlx</author>
+		<description>Delete tb_fms_bsa_allotments SQL</description>
+	</method>
+	
+	<!-- Bsa 대상관리 TB_FMS_BSA_STATUS 업데이트  -->
+	<method>
+		<sql id="updateStatus">
+			UPDATE TB_FMS_BSA_STATUS 
+			   SET airline_code     = :agentCode2	<!-- 항공사 CODE : 988 -->
+			 	 , status    		= :status
+				 , orig_code      	= :origCode
+				 , dest_code      	= :destCode
+				 , flight_no      	= :flightNo
+				 , aircraft_type    = :acType
+				 , etd_date      	= :etdDate 
+				 , etd_time      	= :etdTime 
+				 , eta_date      	= :etaDate 
+				 , eta_time      	= :etaTime
+				 , update_user_id   = TO_NCHAR(:updateUserId)
+				 , update_date_time = sysdate + (:gmtTime/24) 
+				 , ltc_type			= :ltcType
+				 , product_type		= :productType
+				 , special_code		= :specialCode
+				 , team_code		= :csTeamCode
+			 WHERE ent_code 		  = :entCode
+			   AND ent_business_code  = :entBusinessCode
+			   AND BSA_JOB_NO   	  = :bsaJobNo
+		</sql>
+		<author>nlx</author>
+		<description>Update TB_FMS_BSA_STATUS SQL</description>
+	</method>
+	
+	<!-- Bsa Status 리스트 가져오기 -->
+	<method> 
+		<sql id="getBsaStatusList">
+			WITH AAA AS (
+		             SELECT ROW_NUMBER() OVER (PARTITION BY AIRLINE_CODE, DEST_CODE, ETD_DATE ORDER BY AIRLINE_CODE, FLIGHT_NO, DEST_CODE, ETD_DATE, ETD_TIME) AS ROWCNT, TBL.*
+		               FROM (
+		                   SELECT    AIRLINE.etc2					as airline_code					<!-- IATA CODE : OZ -->
+		        				   , AIRLINE.code 			 		as airline_code2				<!--  항공사 CODE : 988 --> 
+		                          , AIRLINE.name_default AIRLINE_NAME
+                                  , TO_CHAR(ETD_DATE, 'd') WEEK 
+                                  , FLIGHT_NO
+		                          , TO_CHAR(ETD_DATE, 'YYYY-MM-DD')  ETD_DATE 
+		                          , ORIG_CODE 
+		                          , DEST_CODE 
+		                          , ACTYPE.name_default AS AIRCRAFT_TYPE_NAME                                 
+		                          , ETD_TIME 
+		                          , ETA_TIME 
+		                          , ( SELECT  LISTAGG(ALLOTMENTS, ' + ') WITHIN GROUP (ORDER BY ULD_CONTOUR)  AS ALLOTMENTS
+									  FROM ( SELECT DECODE(BAA.ULD_CONTOUR,'','LOOSE',BAA.ULD_CONTOUR) ULD_CONTOUR
+												  , SUM(DECODE(BAA.ULD_CNT,'','1',BAA.ULD_CNT)) ||  '*' ||  DECODE(stype.name_default, '', '', stype.name_default) ||  DECODE(contour.name_default, '', 'E', contour.name_default) ALLOTMENTS
+											      , BSS.ETD_DATE 
+											      , BSS.BSA_JOB_NO
+											   FROM TB_FMS_BSA_ALLOTMENTS BAA 
+										  LEFT JOIN tb_fms_bsa_status BSS 
+										         ON BSS.BSA_JOB_NO = BAA.BSA_JOB_NO 
+										  LEFT JOIN tb_sms_code_detail   contour
+						                         ON contour.ent_code    =  :srchEntCode
+						                        AND contour.use_yn      = 'Y'
+						                        AND contour.group_code  = 'ULD_CONTOUR'
+						                        AND contour.code        = BAA.ULD_CONTOUR 
+                                          LEFT JOIN tb_sms_code_detail   stype
+						                         ON stype.ent_code    =  :srchEntCode
+						                        AND stype.use_yn      = 'Y'
+						                        AND stype.group_code  = 'ULD_SIZE_TYPE'
+						                        AND stype.code        = BAA.ULD_SIZE_TYPE      
+						                      GROUP BY BSS.BSA_JOB_NO , BSS.ETD_DATE , ULD_CONTOUR, stype.name_default,contour.name_default 
+						                      ORDER BY ULD_CONTOUR
+				                           ) 
+				                        WHERE ETD_DATE = BS.ETD_DATE
+				                          AND BSA_JOB_NO = BS.BSA_JOB_NO
+                                     GROUP BY BSA_JOB_NO, ETD_DATE 
+									) AS ALLOTMENTS
+		                          , (SELECT NVL(SUM(VWT),0) FROM TB_FMS_BSA_ALLOTMENTS BA WHERE BS.BSA_JOB_NO = BA.BSA_JOB_NO) PIVOT_WT
+		                          , STATUS.name_default AS STATUS_NAME
+		                          , BSA_JOB_NO
+		                          , BS.STATUS
+		                          , GET_SPECIAL_HANDLING_3CODE(bs.ent_code, bs.SPECIAL_CODE) special3_code
+		                   FROM  tb_fms_bsa_status  BS
+		                   LEFT JOIN TB_SMS_CODE_DETAIL	STATUS
+								    ON STATUS.ent_code 		= bs.ent_code
+								   AND STATUS.use_yn 		= 'Y'
+								   AND STATUS.group_code 	= 'BSA_STATUS'
+								   AND STATUS.code 			= bs.status 
+                             LEFT JOIN tb_sms_code_detail	ACTYPE
+                                    ON ACTYPE.ent_code 		= bs.ent_code
+                                   AND ACTYPE.use_yn 	    = 'Y'
+                                   AND ACTYPE.group_code    = 'AIRCRAFT_TYPE'
+                                   AND ACTYPE.code 			= bs.aircraft_type
+                             LEFT JOIN tb_sms_code_detail AIRLINE
+									ON AIRLINE.ent_code 	= bs.ent_code
+						           AND AIRLINE.use_yn 		= 'Y'
+						           AND AIRLINE.group_code 	= 'SIGN_AIRLINE'
+						           AND AIRLINE.CODE 		= bs.airline_code
+						     LEFT JOIN tb_sms_code_detail cityport 
+						            ON cityport.ent_code     = bs.ent_code
+						           AND cityport.use_yn       = 'Y'
+						           AND cityport.group_code   = 'CITY_PORT'
+						           AND cityport.etc1 		 = 'AIR'
+						           AND cityport.code         = bs.dest_code
+                               #where#
+                               #srchAgentCode#
+                               #srchOrigCode#  
+                               #srchDestCode#
+                               #srchCsTeamCode# 
+                               #srchArea#      
+		             		) TBL 
+			),
+			BOOK AS  (SELECT * FROM(
+		          /*   SELECT  NVL(SUM(BK_VWT),0)  - NVL(SUM(OFF_VWT),0) + (CASE WHEN MAX(ULDC.OFF_BUP_YN) = 'Y' THEN  SUM(BUP_VWT) ELSE 0 END) AS BOOK_VWT
+                          , NVL((SUM(BK_GWT)),0)  - NVL(SUM(OFF_GWT),0) + (CASE WHEN MAX(ULDC.OFF_BUP_YN) = 'Y' THEN  SUM(BUP_GWT)  ELSE 0 END) AS BOOK_GWT */
+                             
+		             SELECT NVL(SUM(BK_VWT),0)   AS BOOK_VWT
+                          , NVL((SUM(BK_GWT)),0) AS BOOK_GWT   
+                          , OD.BSA_JOB_NO, OD.ORDER_TYPE_MH
+		               FROM TB_COM_OD     OD 
+		         INNER JOIN TB_COM_OD_BL  BL            ON BL.JOB_NO = OD.JOB_NO
+		         
+		         /*
+		          LEFT JOIN TB_FMS_BUP_OFF_CARGO OFC     
+		                 ON OFC.ENT_CODE               = :srchEntCode
+		                AND OFC.ENT_BUSINESS_CODE      = :srchEntBusinessCode
+		                AND OFC.JOB_NO                 = OD.JOB_NO
+		                
+		          LEFT JOIN TB_FMS_BUP_ULD_CARGO ULDC   
+		                 ON ULDC.ENT_CODE              = :srchEntCode
+		                AND ULDC.ENT_BUSINESS_CODE     = :srchEntBusinessCode
+		                 AND ULDC.JOB_NO                = OD.JOB_NO
+		         */        
+		              WHERE OD.ENT_CODE                = :srchEntCode
+		                AND OD.ENT_BUSINESS_CODE       = :srchEntBusinessCode
+		           GROUP BY od.ent_code,od.ent_business_code, od.BSA_JOB_NO , OD.Airline_Code, OD.ORDER_TYPE_MH)
+		           WHERE ORDER_TYPE_MH = 'M'
+            )
+			
+			SELECT ROWCNT
+			     , AAA.AIRLINE_CODE
+			     , AAA.AIRLINE_CODE2	<!--  항공사 CODE : 988 -->
+			     , MAX(AIRLINE_NAME) AIRLINE_NAME
+			     , MAX(DECODE(WEEK, '2', AAA.FLIGHT_NO, NULL)) AS MON_FLIGHT_NO
+			     , MAX(DECODE(WEEK, '3', AAA.FLIGHT_NO, NULL)) AS TUE_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '4', AAA.FLIGHT_NO, NULL)) AS WED_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '5', AAA.FLIGHT_NO, NULL)) AS THU_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '6', AAA.FLIGHT_NO, NULL)) AS FRI_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '7', AAA.FLIGHT_NO, NULL)) AS SAT_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '1', AAA.FLIGHT_NO, NULL)) AS SUN_FLIGHT_NO
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ETD_DATE, NULL)) AS MON_ETD_DATE
+			     , MAX(DECODE(WEEK, '3', AAA.ETD_DATE, NULL)) AS TUE_ETD_DATE
+			     , MAX(DECODE(WEEK, '4', AAA.ETD_DATE, NULL)) AS WED_ETD_DATE
+			     , MAX(DECODE(WEEK, '5', AAA.ETD_DATE, NULL)) AS THU_ETD_DATE
+			     , MAX(DECODE(WEEK, '6', AAA.ETD_DATE, NULL)) AS FRI_ETD_DATE
+			     , MAX(DECODE(WEEK, '7', AAA.ETD_DATE, NULL)) AS SAT_ETD_DATE
+			     , MAX(DECODE(WEEK, '1', AAA.ETD_DATE, NULL)) AS SUN_ETD_DATE
+			    
+			     , MAX(DECODE(WEEK, '2', AAA.ORIG_CODE, NULL)) AS MON_ORIG_CODE
+			     , MAX(DECODE(WEEK, '3', AAA.ORIG_CODE, NULL)) AS TUE_ORIG_CODE
+                 , MAX(DECODE(WEEK, '4', AAA.ORIG_CODE, NULL)) AS WED_ORIG_CODE
+                 , MAX(DECODE(WEEK, '5', AAA.ORIG_CODE, NULL)) AS THU_ORIG_CODE
+                 , MAX(DECODE(WEEK, '6', AAA.ORIG_CODE, NULL)) AS FRI_ORIG_CODE
+                 , MAX(DECODE(WEEK, '7', AAA.ORIG_CODE, NULL)) AS SAT_ORIG_CODE
+                 , MAX(DECODE(WEEK, '1', AAA.ORIG_CODE, NULL)) AS SUN_ORIG_CODE   
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.DEST_CODE, NULL)) AS MON_DEST_CODE
+			     , MAX(DECODE(WEEK, '3', AAA.DEST_CODE, NULL)) AS TUE_DEST_CODE
+                 , MAX(DECODE(WEEK, '4', AAA.DEST_CODE, NULL)) AS WED_DEST_CODE
+                 , MAX(DECODE(WEEK, '5', AAA.DEST_CODE, NULL)) AS THU_DEST_CODE
+                 , MAX(DECODE(WEEK, '6', AAA.DEST_CODE, NULL)) AS FRI_DEST_CODE
+                 , MAX(DECODE(WEEK, '7', AAA.DEST_CODE, NULL)) AS SAT_DEST_CODE
+                 , MAX(DECODE(WEEK, '1', AAA.DEST_CODE, NULL)) AS SUN_DEST_CODE 
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS MON_AIRCRAFT_TYPE_NAME
+			     , MAX(DECODE(WEEK, '3', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS TUE_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '4', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS WED_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '5', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS THU_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '6', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS FRI_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '7', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS SAT_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '1', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS SUN_AIRCRAFT_TYPE_NAME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ETD_TIME, NULL)) AS MON_ETD_TIME
+			     , MAX(DECODE(WEEK, '3', AAA.ETD_TIME, NULL)) AS TUE_ETD_TIME
+                 , MAX(DECODE(WEEK, '4', AAA.ETD_TIME, NULL)) AS WED_ETD_TIME
+                 , MAX(DECODE(WEEK, '5', AAA.ETD_TIME, NULL)) AS THU_ETD_TIME
+                 , MAX(DECODE(WEEK, '6', AAA.ETD_TIME, NULL)) AS FRI_ETD_TIME
+                 , MAX(DECODE(WEEK, '7', AAA.ETD_TIME, NULL)) AS SAT_ETD_TIME
+                 , MAX(DECODE(WEEK, '1', AAA.ETD_TIME, NULL)) AS SUN_ETD_TIME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ETA_TIME, NULL)) AS MON_ETA_TIME
+			     , MAX(DECODE(WEEK, '3', AAA.ETA_TIME, NULL)) AS TUE_ETA_TIME
+                 , MAX(DECODE(WEEK, '4', AAA.ETA_TIME, NULL)) AS WED_ETA_TIME
+                 , MAX(DECODE(WEEK, '5', AAA.ETA_TIME, NULL)) AS THU_ETA_TIME
+                 , MAX(DECODE(WEEK, '6', AAA.ETA_TIME, NULL)) AS FRI_ETA_TIME
+                 , MAX(DECODE(WEEK, '7', AAA.ETA_TIME, NULL)) AS SAT_ETA_TIME
+                 , MAX(DECODE(WEEK, '1', AAA.ETA_TIME, NULL)) AS SUN_ETA_TIME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.SPECIAL3_CODE, NULL)) AS MON_SPECIAL3_CODE
+			     , MAX(DECODE(WEEK, '3', AAA.SPECIAL3_CODE, NULL)) AS TUE_SPECIAL3_CODE
+                 , MAX(DECODE(WEEK, '4', AAA.SPECIAL3_CODE, NULL)) AS WED_SPECIAL3_CODE
+                 , MAX(DECODE(WEEK, '5', AAA.SPECIAL3_CODE, NULL)) AS THU_SPECIAL3_CODE
+                 , MAX(DECODE(WEEK, '6', AAA.SPECIAL3_CODE, NULL)) AS FRI_SPECIAL3_CODE
+                 , MAX(DECODE(WEEK, '7', AAA.SPECIAL3_CODE, NULL)) AS SAT_SPECIAL3_CODE
+                 , MAX(DECODE(WEEK, '1', AAA.SPECIAL3_CODE, NULL)) AS SUN_SPECIAL3_CODE
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ALLOTMENTS, NULL)) AS MON_ALLOTMENTS
+			     , MAX(DECODE(WEEK, '3', AAA.ALLOTMENTS, NULL)) AS TUE_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '4', AAA.ALLOTMENTS, NULL)) AS WED_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '5', AAA.ALLOTMENTS, NULL)) AS THU_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '6', AAA.ALLOTMENTS, NULL)) AS FRI_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '7', AAA.ALLOTMENTS, NULL)) AS SAT_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '1', AAA.ALLOTMENTS, NULL)) AS SUN_ALLOTMENTS
+                 
+                 , MAX(DECODE(WEEK, '2', NVL(BOOK.BOOK_GWT,0), 0)) AS MON_BK_GWT
+			     , MAX(DECODE(WEEK, '3', NVL(BOOK.BOOK_GWT,0), 0)) AS TUE_BK_GWT
+                 , MAX(DECODE(WEEK, '4', NVL(BOOK.BOOK_GWT,0), 0)) AS WED_BK_GWT
+                 , MAX(DECODE(WEEK, '5', NVL(BOOK.BOOK_GWT,0), 0)) AS THU_BK_GWT
+                 , MAX(DECODE(WEEK, '6', NVL(BOOK.BOOK_GWT,0), 0)) AS FRI_BK_GWT
+                 , MAX(DECODE(WEEK, '7', NVL(BOOK.BOOK_GWT,0), 0)) AS SAT_BK_GWT
+                 , MAX(DECODE(WEEK, '1', NVL(BOOK.BOOK_GWT,0), 0)) AS SUN_BK_GWT
+                 
+                 , MAX(DECODE(WEEK, '2', NVL(BOOK.BOOK_VWT,0), 0)) AS MON_BK_VWT
+			     , MAX(DECODE(WEEK, '3', NVL(BOOK.BOOK_VWT,0), 0)) AS TUE_BK_VWT
+                 , MAX(DECODE(WEEK, '4', NVL(BOOK.BOOK_VWT,0), 0)) AS WED_BK_VWT
+                 , MAX(DECODE(WEEK, '5', NVL(BOOK.BOOK_VWT,0), 0)) AS THU_BK_VWT
+                 , MAX(DECODE(WEEK, '6', NVL(BOOK.BOOK_VWT,0), 0)) AS FRI_BK_VWT
+                 , MAX(DECODE(WEEK, '7', NVL(BOOK.BOOK_VWT,0), 0)) AS SAT_BK_VWT
+                 , MAX(DECODE(WEEK, '1', NVL(BOOK.BOOK_VWT,0), 0)) AS SUN_BK_VWT
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.PIVOT_WT, 0)) AS MON_PIVOT_WT
+			     , MAX(DECODE(WEEK, '3', AAA.PIVOT_WT, 0)) AS TUE_PIVOT_WT
+                 , MAX(DECODE(WEEK, '4', AAA.PIVOT_WT, 0)) AS WED_PIVOT_WT
+                 , MAX(DECODE(WEEK, '5', AAA.PIVOT_WT, 0)) AS THU_PIVOT_WT
+                 , MAX(DECODE(WEEK, '6', AAA.PIVOT_WT, 0)) AS FRI_PIVOT_WT
+                 , MAX(DECODE(WEEK, '7', AAA.PIVOT_WT, 0)) AS SAT_PIVOT_WT
+                 , MAX(DECODE(WEEK, '1', AAA.PIVOT_WT, 0)) AS SUN_PIVOT_WT
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.STATUS_NAME, NULL)) AS MON_STATUS_NAME
+			     , MAX(DECODE(WEEK, '3', AAA.STATUS_NAME, NULL)) AS TUE_STATUS_NAME
+                 , MAX(DECODE(WEEK, '4', AAA.STATUS_NAME, NULL)) AS WED_STATUS_NAME
+                 , MAX(DECODE(WEEK, '5', AAA.STATUS_NAME, NULL)) AS THU_STATUS_NAME
+                 , MAX(DECODE(WEEK, '6', AAA.STATUS_NAME, NULL)) AS FRI_STATUS_NAME
+                 , MAX(DECODE(WEEK, '7', AAA.STATUS_NAME, NULL)) AS SAT_STATUS_NAME
+                 , MAX(DECODE(WEEK, '1', AAA.STATUS_NAME, NULL)) AS SUN_STATUS_NAME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.STATUS, NULL)) AS MON_STATUS_CODE
+			     , MAX(DECODE(WEEK, '3', AAA.STATUS, NULL)) AS TUE_STATUS_CODE
+                 , MAX(DECODE(WEEK, '4', AAA.STATUS, NULL)) AS WED_STATUS_CODE
+                 , MAX(DECODE(WEEK, '5', AAA.STATUS, NULL)) AS THU_STATUS_CODE
+                 , MAX(DECODE(WEEK, '6', AAA.STATUS, NULL)) AS FRI_STATUS_CODE
+                 , MAX(DECODE(WEEK, '7', AAA.STATUS, NULL)) AS SAT_STATUS_CODE
+                 , MAX(DECODE(WEEK, '1', AAA.STATUS, NULL)) AS SUN_STATUS_CODE
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.BSA_JOB_NO, NULL)) AS MON_BSA_JOB_NO
+			     , MAX(DECODE(WEEK, '3', AAA.BSA_JOB_NO, NULL)) AS TUE_BSA_JOB_NO
+                 , MAX(DECODE(WEEK, '4', AAA.BSA_JOB_NO, NULL)) AS WED_BSA_JOB_NO
+                 , MAX(DECODE(WEEK, '5', AAA.BSA_JOB_NO, NULL)) AS THU_BSA_JOB_NO
+                 , MAX(DECODE(WEEK, '6', AAA.BSA_JOB_NO, NULL)) AS FRI_BSA_JOB_NO
+                 , MAX(DECODE(WEEK, '7', AAA.BSA_JOB_NO, NULL)) AS SAT_BSA_JOB_NO
+                 , MAX(DECODE(WEEK, '1', AAA.BSA_JOB_NO, NULL)) AS SUN_BSA_JOB_NO
+            FROM AAA
+       LEFT JOIN BOOK 
+              ON AAA.BSA_JOB_NO 	= BOOK.BSA_JOB_NO
+        GROUP BY ROWCNT, AAA.AIRLINE_CODE, AAA.AIRLINE_CODE2, AAA.DEST_CODE
+        ORDER BY AAA.AIRLINE_CODE
+		</sql>
+		<author>nlx</author>
+		<description>tb_fms_bsa_status List</description>
+	</method>
+	
+	<!-- 고객서비스 전용 Bsa Status 리스트 가져오기 -->
+	<method>
+		<sql id="getCustomerBsaStatusList">
+			WITH AAA AS (
+		             SELECT ROW_NUMBER() OVER (PARTITION BY AIRLINE_CODE, ETD_DATE, DEST_CODE ORDER BY AIRLINE_CODE, FLIGHT_NO, DEST_CODE, ETD_DATE, ETD_TIME) AS ROWCNT, TBL.*
+		               FROM (
+		                   SELECT    AIRLINE.etc2					as airline_code					<!-- IATA CODE : OZ -->
+		        				   , AIRLINE.code 			 		as airline_code2				<!--  항공사 CODE : 988 --> 
+		                          , AIRLINE.name_default AIRLINE_NAME
+                                  , TO_CHAR(ETD_DATE, 'd') WEEK 
+                                  , FLIGHT_NO
+		                          , TO_CHAR(ETD_DATE, 'YYYY-MM-DD')  ETD_DATE 
+		                          , ORIG_CODE 
+		                          , DEST_CODE 
+		                          , ACTYPE.name_default AS AIRCRAFT_TYPE_NAME                                 
+		                          , ETD_TIME 
+		                          , ETA_TIME 
+		                          , ( SELECT  LISTAGG(ALLOTMENTS, ' + ') WITHIN GROUP (ORDER BY ULD_CONTOUR)  AS ALLOTMENTS
+									  FROM ( SELECT DECODE(BAA.ULD_CONTOUR,'','LOOSE',BAA.ULD_CONTOUR) ULD_CONTOUR
+												  , SUM(DECODE(BAA.ULD_CNT,'','1',BAA.ULD_CNT)) ||  '*' ||  DECODE(contour.name_default, '', 'LOOSE', contour.name_default) ALLOTMENTS
+											      , BSS.ETD_DATE 
+											      , BSS.BSA_JOB_NO
+											   FROM TB_FMS_BSA_ALLOTMENTS BAA 
+										  LEFT JOIN tb_fms_bsa_status BSS 
+										         ON BSS.BSA_JOB_NO = BAA.BSA_JOB_NO 
+										  LEFT JOIN tb_sms_code_detail   contour
+						                         ON contour.ent_code    =  :srchEntCode
+						                        AND contour.use_yn      = 'Y'
+						                        AND contour.group_code  = 'ULD_CONTOUR'
+						                        AND contour.code        = BAA.ULD_CONTOUR 
+						                      GROUP BY BSS.BSA_JOB_NO , BSS.ETD_DATE , ULD_CONTOUR, contour.name_default 
+						                      ORDER BY ULD_CONTOUR
+				                           ) 
+				                        WHERE ETD_DATE = BS.ETD_DATE
+				                          AND BSA_JOB_NO = BS.BSA_JOB_NO
+                                     GROUP BY BSA_JOB_NO, ETD_DATE 
+									) AS ALLOTMENTS
+		                          , (SELECT NVL(SUM(GWT),0) FROM TB_FMS_BSA_ALLOTMENTS BA WHERE BS.BSA_JOB_NO = BA.BSA_JOB_NO) PIVOT_WT
+		                          , STATUS.name_default AS STATUS_NAME
+		                          , BSA_JOB_NO
+		                          , BS.STATUS
+		                   FROM  tb_fms_bsa_status  BS
+		                   LEFT JOIN TB_SMS_CODE_DETAIL	STATUS
+								    ON STATUS.ent_code 		= bs.ent_code
+								   AND STATUS.use_yn 		= 'Y'
+								   AND STATUS.group_code 	= 'BSA_STATUS'
+								   AND STATUS.code 			= bs.status 
+                             LEFT JOIN tb_sms_code_detail	ACTYPE
+                                    ON ACTYPE.ent_code 		= bs.ent_code
+                                   AND ACTYPE.use_yn 	    = 'Y'
+                                   AND ACTYPE.group_code    = 'AIRCRAFT_TYPE'
+                                   AND ACTYPE.code 			= bs.aircraft_type
+                             LEFT JOIN tb_sms_code_detail AIRLINE
+									ON AIRLINE.ent_code 	= bs.ent_code
+						           AND AIRLINE.use_yn 		= 'Y'
+						           AND AIRLINE.group_code 	= 'SIGN_AIRLINE'
+						           AND AIRLINE.CODE 		= bs.airline_code
+						     LEFT JOIN tb_sms_code_detail cityport 
+						            ON cityport.ent_code     = bs.ent_code
+						           AND cityport.use_yn       = 'Y'
+						           AND cityport.group_code   = 'CITY_PORT'
+						           AND cityport.etc1 		 = 'AIR'
+						           AND cityport.code         = bs.dest_code
+                               #where#
+                               #srchAgentCode#
+                               #srchOrigCode#  
+                               #srchDestCode#
+                               #srchCsTeamCode# 
+                               #srchArea#      
+		             		) TBL 
+			),
+			BOOK AS  (SELECT * FROM(
+		             SELECT  NVL(SUM(BK_VWT),0)  - NVL(SUM(OFF_VWT),0) + (CASE WHEN MAX(ULDC.OFF_BUP_YN) = 'Y' THEN  SUM(BUP_VWT) ELSE 0 END) AS BOOK_VWT
+                          , NVL((SUM(BK_GWT)),0)  - NVL(SUM(OFF_GWT),0) + (CASE WHEN MAX(ULDC.OFF_BUP_YN) = 'Y' THEN  SUM(BUP_GWT)  ELSE 0 END) AS BOOK_GWT   
+                          , OD.BSA_JOB_NO, OD.ORDER_TYPE_MH
+		               FROM TB_COM_OD     OD 
+		         INNER JOIN TB_COM_OD_BL  BL            ON BL.JOB_NO = OD.JOB_NO
+		          LEFT JOIN TB_FMS_BUP_OFF_CARGO OFC     
+		                 ON OFC.ENT_CODE               = :srchEntCode
+		                AND OFC.ENT_BUSINESS_CODE      = :srchEntBusinessCode
+		                AND OFC.JOB_NO                 = OD.JOB_NO
+		          LEFT JOIN TB_FMS_BUP_ULD_CARGO ULDC   
+		                 ON ULDC.ENT_CODE              = :srchEntCode
+		                AND ULDC.ENT_BUSINESS_CODE     = :srchEntBusinessCode
+		                 AND ULDC.JOB_NO                = OD.JOB_NO
+		              WHERE OD.ENT_CODE                = :srchEntCode
+		                AND OD.ENT_BUSINESS_CODE       = :srchEntBusinessCode
+		           GROUP BY od.ent_code,od.ent_business_code, od.BSA_JOB_NO , OD.Airline_Code, OD.ORDER_TYPE_MH)
+		           WHERE ORDER_TYPE_MH = 'M'
+            )
+			
+			SELECT ROWCNT
+			     , AAA.AIRLINE_CODE
+			     , AAA.AIRLINE_CODE2	<!--  항공사 CODE : 988 -->
+			     , AAA.DEST_CODE
+			     , MAX(AIRLINE_NAME) AIRLINE_NAME
+			     , MAX(DECODE(WEEK, '2', AAA.FLIGHT_NO, NULL)) AS MON_FLIGHT_NO
+			     , MAX(DECODE(WEEK, '3', AAA.FLIGHT_NO, NULL)) AS TUE_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '4', AAA.FLIGHT_NO, NULL)) AS WED_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '5', AAA.FLIGHT_NO, NULL)) AS THU_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '6', AAA.FLIGHT_NO, NULL)) AS FRI_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '7', AAA.FLIGHT_NO, NULL)) AS SAT_FLIGHT_NO
+                 , MAX(DECODE(WEEK, '1', AAA.FLIGHT_NO, NULL)) AS SUN_FLIGHT_NO
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ETD_DATE, NULL)) AS MON_ETD_DATE
+			     , MAX(DECODE(WEEK, '3', AAA.ETD_DATE, NULL)) AS TUE_ETD_DATE
+			     , MAX(DECODE(WEEK, '4', AAA.ETD_DATE, NULL)) AS WED_ETD_DATE
+			     , MAX(DECODE(WEEK, '5', AAA.ETD_DATE, NULL)) AS THU_ETD_DATE
+			     , MAX(DECODE(WEEK, '6', AAA.ETD_DATE, NULL)) AS FRI_ETD_DATE
+			     , MAX(DECODE(WEEK, '7', AAA.ETD_DATE, NULL)) AS SAT_ETD_DATE
+			     , MAX(DECODE(WEEK, '1', AAA.ETD_DATE, NULL)) AS SUN_ETD_DATE
+			    
+			     , MAX(DECODE(WEEK, '2', AAA.ORIG_CODE, NULL)) AS MON_ORIG_CODE
+			     , MAX(DECODE(WEEK, '3', AAA.ORIG_CODE, NULL)) AS TUE_ORIG_CODE
+                 , MAX(DECODE(WEEK, '4', AAA.ORIG_CODE, NULL)) AS WED_ORIG_CODE
+                 , MAX(DECODE(WEEK, '5', AAA.ORIG_CODE, NULL)) AS THU_ORIG_CODE
+                 , MAX(DECODE(WEEK, '6', AAA.ORIG_CODE, NULL)) AS FRI_ORIG_CODE
+                 , MAX(DECODE(WEEK, '7', AAA.ORIG_CODE, NULL)) AS SAT_ORIG_CODE
+                 , MAX(DECODE(WEEK, '1', AAA.ORIG_CODE, NULL)) AS SUN_ORIG_CODE   
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.DEST_CODE, NULL)) AS MON_DEST_CODE
+			     , MAX(DECODE(WEEK, '3', AAA.DEST_CODE, NULL)) AS TUE_DEST_CODE
+                 , MAX(DECODE(WEEK, '4', AAA.DEST_CODE, NULL)) AS WED_DEST_CODE
+                 , MAX(DECODE(WEEK, '5', AAA.DEST_CODE, NULL)) AS THU_DEST_CODE
+                 , MAX(DECODE(WEEK, '6', AAA.DEST_CODE, NULL)) AS FRI_DEST_CODE
+                 , MAX(DECODE(WEEK, '7', AAA.DEST_CODE, NULL)) AS SAT_DEST_CODE
+                 , MAX(DECODE(WEEK, '1', AAA.DEST_CODE, NULL)) AS SUN_DEST_CODE 
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS MON_AIRCRAFT_TYPE_NAME
+			     , MAX(DECODE(WEEK, '3', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS TUE_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '4', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS WED_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '5', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS THU_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '6', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS FRI_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '7', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS SAT_AIRCRAFT_TYPE_NAME
+                 , MAX(DECODE(WEEK, '1', AAA.AIRCRAFT_TYPE_NAME, NULL)) AS SUN_AIRCRAFT_TYPE_NAME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ETD_TIME, NULL)) AS MON_ETD_TIME
+			     , MAX(DECODE(WEEK, '3', AAA.ETD_TIME, NULL)) AS TUE_ETD_TIME
+                 , MAX(DECODE(WEEK, '4', AAA.ETD_TIME, NULL)) AS WED_ETD_TIME
+                 , MAX(DECODE(WEEK, '5', AAA.ETD_TIME, NULL)) AS THU_ETD_TIME
+                 , MAX(DECODE(WEEK, '6', AAA.ETD_TIME, NULL)) AS FRI_ETD_TIME
+                 , MAX(DECODE(WEEK, '7', AAA.ETD_TIME, NULL)) AS SAT_ETD_TIME
+                 , MAX(DECODE(WEEK, '1', AAA.ETD_TIME, NULL)) AS SUN_ETD_TIME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ETA_TIME, NULL)) AS MON_ETA_TIME
+			     , MAX(DECODE(WEEK, '3', AAA.ETA_TIME, NULL)) AS TUE_ETA_TIME
+                 , MAX(DECODE(WEEK, '4', AAA.ETA_TIME, NULL)) AS WED_ETA_TIME
+                 , MAX(DECODE(WEEK, '5', AAA.ETA_TIME, NULL)) AS THU_ETA_TIME
+                 , MAX(DECODE(WEEK, '6', AAA.ETA_TIME, NULL)) AS FRI_ETA_TIME
+                 , MAX(DECODE(WEEK, '7', AAA.ETA_TIME, NULL)) AS SAT_ETA_TIME
+                 , MAX(DECODE(WEEK, '1', AAA.ETA_TIME, NULL)) AS SUN_ETA_TIME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.ALLOTMENTS, NULL)) AS MON_ALLOTMENTS
+			     , MAX(DECODE(WEEK, '3', AAA.ALLOTMENTS, NULL)) AS TUE_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '4', AAA.ALLOTMENTS, NULL)) AS WED_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '5', AAA.ALLOTMENTS, NULL)) AS THU_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '6', AAA.ALLOTMENTS, NULL)) AS FRI_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '7', AAA.ALLOTMENTS, NULL)) AS SAT_ALLOTMENTS
+                 , MAX(DECODE(WEEK, '1', AAA.ALLOTMENTS, NULL)) AS SUN_ALLOTMENTS
+                 
+                 , MAX(DECODE(WEEK, '2', NVL(BOOK.BOOK_GWT,0), 0)) AS MON_BK_GWT
+			     , MAX(DECODE(WEEK, '3', NVL(BOOK.BOOK_GWT,0), 0)) AS TUE_BK_GWT
+                 , MAX(DECODE(WEEK, '4', NVL(BOOK.BOOK_GWT,0), 0)) AS WED_BK_GWT
+                 , MAX(DECODE(WEEK, '5', NVL(BOOK.BOOK_GWT,0), 0)) AS THU_BK_GWT
+                 , MAX(DECODE(WEEK, '6', NVL(BOOK.BOOK_GWT,0), 0)) AS FRI_BK_GWT
+                 , MAX(DECODE(WEEK, '7', NVL(BOOK.BOOK_GWT,0), 0)) AS SAT_BK_GWT
+                 , MAX(DECODE(WEEK, '1', NVL(BOOK.BOOK_GWT,0), 0)) AS SUN_BK_GWT
+                 
+                 , MAX(DECODE(WEEK, '2', NVL(BOOK.BOOK_VWT,0), 0)) AS MON_BK_VWT
+			     , MAX(DECODE(WEEK, '3', NVL(BOOK.BOOK_VWT,0), 0)) AS TUE_BK_VWT
+                 , MAX(DECODE(WEEK, '4', NVL(BOOK.BOOK_VWT,0), 0)) AS WED_BK_VWT
+                 , MAX(DECODE(WEEK, '5', NVL(BOOK.BOOK_VWT,0), 0)) AS THU_BK_VWT
+                 , MAX(DECODE(WEEK, '6', NVL(BOOK.BOOK_VWT,0), 0)) AS FRI_BK_VWT
+                 , MAX(DECODE(WEEK, '7', NVL(BOOK.BOOK_VWT,0), 0)) AS SAT_BK_VWT
+                 , MAX(DECODE(WEEK, '1', NVL(BOOK.BOOK_VWT,0), 0)) AS SUN_BK_VWT
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.PIVOT_WT, 0)) AS MON_PIVOT_WT
+			     , MAX(DECODE(WEEK, '3', AAA.PIVOT_WT, 0)) AS TUE_PIVOT_WT
+                 , MAX(DECODE(WEEK, '4', AAA.PIVOT_WT, 0)) AS WED_PIVOT_WT
+                 , MAX(DECODE(WEEK, '5', AAA.PIVOT_WT, 0)) AS THU_PIVOT_WT
+                 , MAX(DECODE(WEEK, '6', AAA.PIVOT_WT, 0)) AS FRI_PIVOT_WT
+                 , MAX(DECODE(WEEK, '7', AAA.PIVOT_WT, 0)) AS SAT_PIVOT_WT
+                 , MAX(DECODE(WEEK, '1', AAA.PIVOT_WT, 0)) AS SUN_PIVOT_WT
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.STATUS_NAME, NULL)) AS MON_STATUS_NAME
+			     , MAX(DECODE(WEEK, '3', AAA.STATUS_NAME, NULL)) AS TUE_STATUS_NAME
+                 , MAX(DECODE(WEEK, '4', AAA.STATUS_NAME, NULL)) AS WED_STATUS_NAME
+                 , MAX(DECODE(WEEK, '5', AAA.STATUS_NAME, NULL)) AS THU_STATUS_NAME
+                 , MAX(DECODE(WEEK, '6', AAA.STATUS_NAME, NULL)) AS FRI_STATUS_NAME
+                 , MAX(DECODE(WEEK, '7', AAA.STATUS_NAME, NULL)) AS SAT_STATUS_NAME
+                 , MAX(DECODE(WEEK, '1', AAA.STATUS_NAME, NULL)) AS SUN_STATUS_NAME
+                 
+                 , MAX(DECODE(WEEK, '2', AAA.STATUS, NULL)) AS MON_STATUS_CODE
+			     , MAX(DECODE(WEEK, '3', AAA.STATUS, NULL)) AS TUE_STATUS_CODE
+                 , MAX(DECODE(WEEK, '4', AAA.STATUS, NULL)) AS WED_STATUS_CODE
+                 , MAX(DECODE(WEEK, '5', AAA.STATUS, NULL)) AS THU_STATUS_CODE
+                 , MAX(DECODE(WEEK, '6', AAA.STATUS, NULL)) AS FRI_STATUS_CODE
+                 , MAX(DECODE(WEEK, '7', AAA.STATUS, NULL)) AS SAT_STATUS_CODE
+                 , MAX(DECODE(WEEK, '1', AAA.STATUS, NULL)) AS SUN_STATUS_CODE
+            FROM AAA
+       LEFT JOIN BOOK 
+              ON AAA.BSA_JOB_NO 	= BOOK.BSA_JOB_NO
+        GROUP BY ROWCNT, AAA.AIRLINE_CODE, AAA.AIRLINE_CODE2, AAA.DEST_CODE
+        ORDER BY AAA.AIRLINE_CODE
+		</sql>
+		<author>nlx</author>
+		<description>tb_fms_bsa_status List</description>
+	</method>
+	
+	<!-- 통합 수익 관리 목록조회 -->
+	<method>
+		<sql id="getIntegratedRevenueList">
+     SELECT TBL.*
+          --, CASE WHEN HOUSE_CWT = 0 THEN 0
+          --       ELSE ROUND(BSA_RATE / HOUSE_CWT, 4) END AS BSA_RATE_YIELD
+          --, CASE WHEN HOUSE_CWT = 0 THEN 0
+          --       ELSE ROUND(PST_RATE / HOUSE_CWT, 4) END AS PST_RATE_YIELD
+          , COUNT(1) OVER () AS TOTAL
+          , ROW_NUMBER() OVER (ORDER BY AIRLINE_CODE, ETD_DATE, ETD_TIME) AS NUM
+     FROM   (
+            SELECT /*+ USE_NL(BSA ALLOT ODBL CD) INDEX(ALLOT) NO_MERGE(ALLOT) PUSH_PRED(ALLOT) NO_MERGE(ODBL) PUSH_PRED(ODBL) INDEX(ODBL.SR_OD (BSA_JOB_NO)) */
+			       BSA.BSA_JOB_NO
+			     , MAX(BSA.AIRLINE_CODE)       AS AIRLINE_CODE
+			     , MAX(AIRLINE.ETC2 || '.png') AS LOGO_IMG_NAME
+			     , MAX(AIRLINE.ETC2)           AS ETC2_AIRLINE_CODE
+			     , MAX(AIRLINE.ETC2)           AS AIRLINE_IATA_CODE
+			     , MAX(BSA.FLIGHT_NO)          AS FLIGHT_NO
+			     , MAX(BSA.ETD_DATE)           AS ETD_DATE
+			     , MAX(BSA.ETD_TIME)           AS ETD_TIME
+			     , MAX(BSA.FLIGHT_NO || ' / ' || TO_CHAR(BSA.ETD_DATE, 'DD MON YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') || ' ' || BSA.ETD_TIME) AS FORMAT_ETD_DATE
+			     , MAX(BSA.ORIG_CODE)          AS ORIG_CODE
+			     , MAX(BSA.DEST_CODE)          AS DEST_CODE
+			     , MAX(BSA.TEAM_CODE)          AS TEAM_CODE      /* 주관 사업부 */
+			     , MAX(TEAM.NAME_DEFAULT)      AS TEAM_NAME
+			     , MAX(CRAFT.NAME_DEFAULT)     AS AIRCRAFT_TYPE
+			     , MAX(BSA.PENALTY_RATE)       AS PENALTY_RATE
+			     , MAX(BSA.LTC_TYPE)           AS LTC_TYPE
+			     , MAX(BSA.PRODUCT_TYPE)       AS PRODUCT_TYPE
+			     , MAX(PRODUCT.ETC2)           AS PRODUCT_NAME
+			     , GET_SPECIAL_HANDLING_ETC2(:entCode, MAX(BSA.SPECIAL_CODE)) AS SPECIAL_CODE
+                 , MAX(ALLOT.MD_MIN_PIVOT)     AS MD_MIN_PIVOT
+                 , MAX(ALLOT.MD_PIVOT)         AS MD_PIVOT
+                 , MAX(ALLOT.LD_MIN_PIVOT)     AS LD_MIN_PIVOT
+                 , MAX(ALLOT.LD_PIVOT)         AS LD_PIVOT
+                 , MAX(ALLOT.LZ_MIN_PIVOT)     AS LZ_MIN_PIVOT
+                 , MAX(ALLOT.LZ_PIVOT)         AS LZ_PIVOT
+                 , MAX(ALLOT.TOT_PIVOT_WT)     AS TOT_PIVOT_WT     /* PIVOT C.WT */
+                 , MAX(ALLOT.TOT_MIN_PIVOT_WT) AS TOT_MIN_PIVOT_WT /* 당일 미충족 (MIN PIVOT) */
+                 
+			     , CASE WHEN NVL(MAX(ALLOT.TOT_MIN_PIVOT_WT), 0) - NVL(SUM(ODBL.MASTER_CWT), 0) > 0 THEN NVL(MAX(ALLOT.TOT_MIN_PIVOT_WT), 0) - NVL(SUM(ODBL.MASTER_CWT), 0)
+			            ELSE 0 END AS PENALTY_WT
+			            
+			     , CASE WHEN NVL(MAX(ALLOT.TOT_MIN_PIVOT_WT), 0) - NVL(SUM(ODBL.MASTER_CWT), 0) > 0 THEN (NVL(MAX(ALLOT.TOT_MIN_PIVOT_WT), 0) - NVL(SUM(ODBL.MASTER_CWT), 0))* NVL(MAX(BSA.PENALTY_RATE), 0)
+			            ELSE 0 END AS PENALTY_AMT
+                 
+                 , SUM(ODBL.HOUSE_RATE) - SUM(ODBL.MASTER_RATE) AS BSA_RATE
+                 , SUM(ODBL.HOUSE_RATE) - SUM(CASE WHEN ODBL.MIN_DIV = 'Min' THEN NVL(ODBL.SALES_RATE, ODBL.BUYING_RATE)
+                                                   ELSE NVL(ODBL.SALES_RATE, ODBL.BUYING_RATE) * ODBL.HOUSE_CWT END) AS CS_DEPT_RATE /* CS 사업수익 */
+                 , SUM(CASE WHEN ODBL.MIN_DIV = 'Min' THEN NVL(ODBL.SALES_RATE, ODBL.BUYING_RATE)
+                                                   ELSE NVL(ODBL.SALES_RATE, ODBL.BUYING_RATE) * ODBL.HOUSE_CWT END) - SUM(ODBL.MASTER_RATE) AS PST_RATE /* PST 사업수익 */
+                 , SUM(ODBL.HOUSE_CWT)         AS HOUSE_CWT
+                 
+                 , SUM(CASE WHEN ODBL.HOUSE_CWT = 0 THEN 0
+                			ELSE ROUND((ODBL.HOUSE_RATE- ODBL.MASTER_RATE) / ODBL.HOUSE_CWT, 4) END) AS BSA_RATE_YIELD
+                 
+                 , SUM(CASE WHEN ODBL.HOUSE_CWT = 0 THEN 0
+                 			ELSE ROUND(((ODBL.HOUSE_RATE - ODBL.MASTER_RATE) - (ODBL.HOUSE_RATE - (NVL(ODBL.SALES_RATE, ODBL.BUYING_RATE) * ODBL.HOUSE_CWT))) / ODBL.HOUSE_CWT, 4) END) AS PST_RATE_YIELD
+                 
+                 , CASE WHEN MAX(BUP.FINISH_YN) = 'Y' OR SUM(OUT_CNT) = SUM(AWB_CNT) THEN 'Finish'
+                        WHEN SUM(AWB_CNT) = SUM(WH_CNT) THEN 'Ready'
+                        ELSE 'Waiting' END AS WORKING_SIGN /* Working sign */
+                 
+                 , SUM(AWB_CNT) AS AWB_CNT
+                 , SUM(WH_CNT)  AS WH_CNT
+                 , SUM(OUT_CNT) AS OUT_CNT
+                 , MAX(BUP.FINISH_YN) AS FINISH_YN
+			FROM   TB_FMS_BSA_STATUS BSA
+			INNER JOIN (
+                        SELECT BSA_JOB_NO
+                             , SUM(CASE WHEN CD.ETC1 = 'M' THEN BSA_ALLOT.GWT ELSE 0 END) AS MD_MIN_PIVOT
+                             , SUM(CASE WHEN CD.ETC1 = 'M' THEN BSA_ALLOT.VWT ELSE 0 END) AS MD_PIVOT
+                             , SUM(CASE WHEN CD.ETC1 = 'L' THEN BSA_ALLOT.GWT ELSE 0 END) AS LD_MIN_PIVOT
+                             , SUM(CASE WHEN CD.ETC1 = 'L' THEN BSA_ALLOT.VWT ELSE 0 END) AS LD_PIVOT
+                             , SUM(CASE WHEN CD.ETC1 = 'Z' THEN BSA_ALLOT.GWT ELSE 0 END) AS LZ_MIN_PIVOT
+                             , SUM(CASE WHEN CD.ETC1 = 'Z' THEN BSA_ALLOT.VWT ELSE 0 END) AS LZ_PIVOT
+                             , SUM(BSA_ALLOT.VWT)     AS TOT_PIVOT_WT     /* PIVOT C.WT */
+                             , SUM(BSA_ALLOT.GWT)     AS TOT_MIN_PIVOT_WT /* 당일 미충족 (MIN PIVOT) */
+                        FROM TB_FMS_BSA_ALLOTMENTS BSA_ALLOT
+                        INNER JOIN TB_SMS_CODE_DETAIL CD ON (CD.ENT_CODE = :entCode AND CD.CODE = NVL(BSA_ALLOT.ULD_POSITION, 'P01') AND CD.GROUP_CODE = 'ULD_POSITION')
+                        GROUP BY BSA_JOB_NO
+                       ) ALLOT ON (BSA.BSA_JOB_NO = ALLOT.BSA_JOB_NO)
+			LEFT OUTER JOIN (
+			                SELECT /*+ ORDERED USE_NL(SR_OD OD RATE) */
+			                       SR_OD.BSA_JOB_NO
+			                     , MAX(OD.BL_TYPE_SC) AS BL_TYPE_SC
+			                     , SR_OD.SR_NO
+			                     
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_GWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_GWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_GWT
+			                                ELSE 0 END) AS MASTER_GWT
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_GWT
+			                                WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_GWT
+			                                WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' THEN OD.BK_GWT
+			                                ELSE 0 END) AS HOUSE_GWT
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_CWT
+			                                ELSE 0 END) AS MASTER_CWT
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' THEN OD.BK_CWT
+			                                ELSE 0 END) AS HOUSE_CWT
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND RATE.APPLY_RANGE = 'Min' THEN NVL(RATE.FREIGHT_CHARGE, 0)
+			                                ELSE   CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_CWT
+			                                            ELSE 0 END * NVL(RATE.FREIGHT_CHARGE, 0) 
+			                                END) AS MASTER_RATE
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND RATE.APPLY_RANGE = 'Min' THEN NVL(RATE.FREIGHT_CHARGE, 0)
+			                                ELSE   CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_CWT
+			                                            ELSE 0 END * NVL(RATE.SALES_RATE, 0)
+			                                END) AS MASTER_SALES_RATE
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND RATE.APPLY_RANGE = 'Min' THEN NVL(RATE.FREIGHT_CHARGE, 0)
+			                                ELSE   CASE WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' THEN OD.BK_CWT
+			                                            ELSE 0 END * NVL(RATE.FREIGHT_CHARGE, 0)
+			                                END) AS HOUSE_RATE
+			                                
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN NVL(RATE.FREIGHT_CHARGE, 0) ELSE NULL END) AS BUYING_RATE /* 주관부서 BUYING */
+			                     , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN RATE.SALES_RATE ELSE NULL END) AS SALES_RATE
+			                     
+			                     , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND RATE.APPLY_RANGE = 'Min' THEN RATE.APPLY_RANGE ELSE NULL END) AS MIN_DIV
+			                     
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN 1 ELSE 0 END) AS AWB_CNT /* MAWB 갯수 */
+                                 , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND OD.WH_PROCESS_STEP > 'B10' THEN 1 ELSE 0 END) AS WH_CNT /* 입고완료 갯수 */
+                                 , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND OD.WH_PROCESS_STEP > 'B40' THEN 1 ELSE 0 END) AS OUT_CNT /* 출고요청 갯수 */
+			                     
+			                FROM   TB_COM_OD SR_OD
+			                INNER JOIN TB_COM_OD OD ON (SR_OD.SR_NO = OD.SR_NO)
+			                LEFT OUTER JOIN TB_COM_OD_FREIGHT_RATE RATE ON (OD.JOB_NO = RATE.JOB_NO)
+			                WHERE  1 = 1
+			                AND    SR_OD.ORDER_TYPE_GAC = 'G'
+			                AND    SR_OD.ORDER_TYPE_MH  = 'M'
+                            
+                            #whereInner#
+                            
+			                GROUP BY SR_OD.BSA_JOB_NO, SR_OD.SR_NO
+			) ODBL ON (ODBL.BSA_JOB_NO = BSA.BSA_JOB_NO)
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL COM_DEST ON (COM_DEST.ENT_CODE = BSA.ENT_CODE AND COM_DEST.GROUP_CODE = 'CITY_PORT' AND COM_DEST.CODE = BSA.DEST_CODE)
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL AIRLINE ON (AIRLINE.ENT_CODE = BSA.ENT_CODE AND AIRLINE.GROUP_CODE = 'SIGN_AIRLINE' AND AIRLINE.CODE = BSA.AIRLINE_CODE)
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL TEAM ON (TEAM.ENT_CODE = BSA.ENT_CODE AND TEAM.GROUP_CODE = 'TEAMCODE' AND TEAM.CODE = BSA.TEAM_CODE)
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL PRODUCT ON (PRODUCT.ENT_CODE = BSA.ENT_CODE AND PRODUCT.GROUP_CODE = 'ALLOT_PRODUCT' AND PRODUCT.CODE = BSA.PRODUCT_TYPE)
+			LEFT OUTER JOIN TB_FMS_BUP BUP ON (BUP.BUILD_UP_JOB_NO = BSA.BSA_JOB_NO)
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL CRAFT ON (CRAFT.ENT_CODE = BSA.ENT_CODE AND CRAFT.GROUP_CODE = 'AIRCRAFT_TYPE' AND CRAFT.CODE = BSA.AIRCRAFT_TYPE)
+			WHERE  BSA.ENT_CODE          = :entCode
+			AND    BSA.ENT_BUSINESS_CODE = :entBusinessCode
+			AND    BSA.ETD_DATE BETWEEN TO_DATE(:srchStartDate, :format) AND TO_DATE(:srchEndDate, :format)
+            
+            #whereOuter#
+            
+			GROUP BY BSA.BSA_JOB_NO
+            ) TBL
+		</sql>
+		<author>LKH</author>
+		<description>통합 수익 관리 목록조회</description>
+	</method>
+	
+	<!-- BSA Contour 정보 조회 -->
+	<method>
+		<sql id="getBsaContourList">
+			SELECT BSA.BSA_JOB_NO
+			     , ALLOT.ULD_POSITION
+			     , POSI.NAME_#lang#  AS POSITION_NAME
+			     , POSI.ETC1
+			     , ALLOT.ULD_CONTOUR
+			     , CONT.NAME_#lang#  AS CONTOUR_NAME
+			     , ALLOT.GWT         AS MIN_PIVOT_WT
+			     , ALLOT.VWT         AS PIVOT_WT
+			     , ALLOT.ULD_CNT
+			FROM   TB_FMS_BSA_STATUS BSA
+			INNER JOIN TB_FMS_BSA_ALLOTMENTS ALLOT ON (ALLOT.BSA_JOB_NO = BSA.BSA_JOB_NO)
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL POSI ON (POSI.ENT_CODE = BSA.ENT_CODE AND POSI.GROUP_CODE = 'ULD_POSITION' AND POSI.CODE = ALLOT.ULD_POSITION)
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL CONT ON (CONT.ENT_CODE = BSA.ENT_CODE AND CONT.GROUP_CODE = 'ULD_CONTOUR' AND CONT.CODE = ALLOT.ULD_CONTOUR)
+			WHERE  BSA.BSA_JOB_NO = :bsaJobNo
+			ORDER BY DECODE(POSI.ETC1, 'M', 1, 'L', 2, 3)
+		</sql>
+		<author>LKH</author>
+		<description>BSA Contour 정보 조회</description>
+	</method>
+	
+	<!-- BSA Contour 정보 조회 -->
+	<method>
+		<sql id="getBsaPenaltyHistoryList">
+			SELECT ROW_NUMBER() OVER (ORDER BY SEQ DESC) AS NUM
+			     , TBL.*
+			FROM   (
+			        SELECT 99999 AS SEQ
+			             , NULL AS USER_NAME
+			             , NULL AS REGIST_DATE
+			             , 'Actualy' AS HISTORY_INFO
+			        FROM   DUAL
+			        UNION ALL
+			        SELECT SEQ
+			             , SEARCH1 AS USER_NAME
+			             , SEARCH2 AS REGIST_DATE
+			             , '(' || SEQ || ') ' || SEARCH2 || ' ' || SEARCH1 AS HISTORY_INFO
+			        FROM   TB_COM_HISTORY_CONTENTS 
+			        WHERE  HISTORY_ID = 'BSA_PENALTY_HISTORY'
+			        AND    REFERENCE_ID = :bsaJobNo
+			) TBL
+		</sql>
+		<author>LKH</author>
+		<description>BSA Contour 정보 조회</description>
+	</method>
+	
+	<!-- BSA Master 정보 조회 -->
+	<method>
+		<sql id="getBsaMasterList">
+                     SELECT /*+ NO_MERGE(BUILDUP) USE_NL(BUILDUP APP) PUSH_PRED(BUILDUP) INDEX(BUILDUP.BUP (BUILD_UP_JOB_NO)) NO_MERGE(CHARGE) USE_NL(CHARGE) PUSH_PRED(CHARGE) */
+                            ROW_NUMBER() OVER (ORDER BY TBL.MBL_NO) AS NUM
+                            
+                          , CASE WHEN TYPE = 'ORDER' THEN HOUSE_CWT - MASTER_CWT ELSE NULL END AS CUT_WT
+                          
+                          , (TBL.HOUSE_RATE - TBL.MASTER_RATE) AS BSA_BUP_REVENUE
+                          , CASE WHEN TBL.HOUSE_CWT = 0 THEN 0
+                                 ELSE ROUND((TBL.HOUSE_RATE - TBL.MASTER_RATE) / TBL.HOUSE_CWT, 4) END BSA_REVENUE_YIELD
+                          
+                          , TBL.HOUSE_RATE - (NVL(TBL.SALES_RATE, TBL.BUYING_RATE) * TBL.HOUSE_CWT) AS CS_REVENUE
+                          , CASE WHEN TBL.HOUSE_CWT = 0 THEN 0
+                                 ELSE ROUND((TBL.HOUSE_RATE - (NVL(TBL.SALES_RATE, TBL.BUYING_RATE) * TBL.HOUSE_CWT)) / TBL.HOUSE_CWT, 4) END CS_REVENUE_YIELD
+                          
+                          , (TBL.HOUSE_RATE - TBL.MASTER_RATE) - (TBL.HOUSE_RATE - (NVL(TBL.SALES_RATE, TBL.BUYING_RATE) * TBL.HOUSE_CWT)) AS PST_REVENUE
+                          , CASE WHEN TBL.HOUSE_CWT = 0 THEN 0
+                                 ELSE ROUND(((TBL.HOUSE_RATE - TBL.MASTER_RATE) - (TBL.HOUSE_RATE - (NVL(TBL.SALES_RATE, TBL.BUYING_RATE) * TBL.HOUSE_CWT))) / TBL.HOUSE_CWT, 4) END PST_REVENUE_YIELD
+                                 
+                          , BUILDUP.BUP_PIECES /* 빌드업 수량 */
+                          
+                          , CASE WHEN (SELECT COUNT(1) FROM TB_SAS_INVOICE INV WHERE INV.JOB_NO = TBL.MASTER_JOB_NO) > 0 THEN '회계이관'
+                                 WHEN APP.UPDATE_ACT_USER IS NOT NULL THEN '관리팀 Closed'
+                                 WHEN APP.UPDATE_APP_USER IS NOT NULL THEN '부서장 컨펌'
+                                 WHEN  1 = 2 THEN '인보이스 정정'
+                                 WHEN  1 = 2 THEN '인보이스 OPEN'
+                                 WHEN  1 = 2 THEN '인보이스 Closed'
+                                 WHEN APP.UPDATE_SET_USER IS NOT NULL THEN '책임자 컨펌'
+                                 WHEN APP.UPDATE_CLO_USER IS NOT NULL THEN '정산완료'
+                                 WHEN  1 = 2 THEN '정산예상단가'
+                                 ELSE '예약단가' END AS INVOICE_STEP
+                                 
+                          , (SELECT COUNT(DISTINCT MNG_JOB_NO) AS CNT
+                             FROM   TB_COM_OD SOD
+                             INNER JOIN TB_COM_HR_RES RES ON (RES.JOB_NO = SOD.JOB_NO)
+                             WHERE  SR_NO = TBL.SR_NO) AS HCS
+                          , TBL.AIRLINE_IATA_CODE || '.png' AS LOGO_IMG_NAME
+                          , TBL.AIRLINE_IATA_CODE AS ETC2_AIRLINE_CODE
+                          , TBL.*
+                          , CHARGE.*
+                          , CASE WHEN TBL.TYPE = 'OFF_LOAD' THEN NULL
+                                 ELSE 
+                            (
+                            SELECT /*+ INDEX(CARGO (JOB_NO)) */
+                                   /* WM_CONCAT(CD.NAME_DEFAULT || ' ' || ULD.ULD_NO || ' ' || ULD.OWNERSHIP || ' (' || SUM(CARGO.BUP_PIECES) || ')') AS ULD_NO oracle 12c 이후 버전 사용 못함 */
+                                   REGEXP_REPLACE(LISTAGG ((CD.NAME_DEFAULT || ' ' || ULD.ULD_NO || ' ' || ULD.OWNERSHIP || ' (' || SUM(CARGO.BUP_PIECES) || ')'), ',') WITHIN GROUP (ORDER BY (CD.NAME_DEFAULT || ' ' || ULD.ULD_NO || ' ' || ULD.OWNERSHIP || ' (' || SUM(CARGO.BUP_PIECES) || ')')), '([^,]+)(,\1)+', '\1') AS ULD_NO
+                            FROM   TB_COM_OD OD
+                            INNER JOIN TB_FMS_BUP_ULD_CARGO CARGO ON (CARGO.JOB_NO = OD.JOB_NO)
+                            INNER JOIN TB_FMS_BUP_ULD ULD ON (ULD.BUILD_UP_JOB_NO = CARGO.BUILD_UP_JOB_NO AND ULD.ULD_SEQ = CARGO.ULD_SEQ)
+                            LEFT OUTER JOIN TB_SMS_CODE_DETAIL CD ON (CD.ENT_CODE = :entCode AND CD.GROUP_CODE = 'ULD_PRE_TEXT' AND CD.CODE = ULD.PREFIX_TEXT)
+                            WHERE  OD.SR_NO = TBL.SR_NO                                    
+                            GROUP BY OD.SR_NO, CD.NAME_DEFAULT || ' ' || ULD.ULD_NO || ' ' || ULD.OWNERSHIP
+                            ) END AS ULD_INFO
+                          , CASE WHEN TBL.TYPE = 'OFF_LOAD' THEN NULL
+                                 ELSE
+                            (
+                            SELECT /*+ INDEX(CARGO (JOB_NO)) */
+                                   /* WM_CONCAT(BSA.FLIGHT_NO || ' / ' || TO_CHAR(ETD_DATE, 'DD MON', 'NLS_DATE_LANGUAGE=ENGLISH') || ' (' || SUM(CARGO.BUP_PIECES) || ')') AS FLIGHT_SCHEDULE oracle 12c 이후 버전 사용 못함 */
+                                   REGEXP_REPLACE(LISTAGG ((BSA.FLIGHT_NO || ' / ' || TO_CHAR(ETD_DATE, 'DD MON', 'NLS_DATE_LANGUAGE=ENGLISH') || ' (' || SUM(CARGO.BUP_PIECES) || ')'), ',') WITHIN GROUP (ORDER BY (BSA.FLIGHT_NO || ' / ' || TO_CHAR(ETD_DATE, 'DD MON', 'NLS_DATE_LANGUAGE=ENGLISH') || ' (' || SUM(CARGO.BUP_PIECES) || ')')), '([^,]+)(,\1)+', '\1') AS FLIGHT_SCHEDULE
+                            FROM   TB_COM_OD OD
+                            INNER JOIN TB_FMS_BUP_ULD_CARGO CARGO ON (CARGO.JOB_NO = OD.JOB_NO)
+                            INNER JOIN TB_FMS_BSA_STATUS BSA ON (BSA.BSA_JOB_NO = CARGO.BUILD_UP_JOB_NO)
+                            WHERE  OD.SR_NO = TBL.SR_NO
+                            GROUP BY OD.SR_NO, BSA.FLIGHT_NO || ' / ' || TO_CHAR(ETD_DATE, 'DD MON', 'NLS_DATE_LANGUAGE=ENGLISH')
+                            ) END AS FLIGHT_NO
+                          , CASE WHEN WAS_DIM.SET_DIM IS NOT NULL THEN WAS_DIM.SET_DIM
+                                 ELSE BOOK_DIM.SET_DIM
+                             END SET_DIM
+                          , CASE WHEN WAS_DIM.SET_DIM IS NOT NULL THEN 'WAS'
+                                 WHEN BOOK_DIM.SET_DIM IS NOT NULL THEN 'BOOK'
+                                 ELSE ''
+                             END DIM_GUN  
+                     FROM   (
+                            SELECT /*+ ORDERED USE_NL(SR_OD OD ODBL RATE OPT AIR) INDEX(SR_OD (BSA_JOB_NO)) */
+                                   'ORDER' AS TYPE
+                                 , MAX(SR_OD.JOB_NO) AS JOB_NO
+			                     , SR_OD.BSA_JOB_NO
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN SR_OD.AIRLINE_CODE ELSE NULL END) AS AIRLINE_CODE
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN AIR.ETC2 ELSE NULL END) AS AIRLINE_IATA_CODE
+                                 
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN ODBL.ORIG_CODE ELSE NULL END) AS ORIG_CODE
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN ODBL.DEST_CODE ELSE NULL END) AS DEST_CODE
+			                     , MAX(OD.BL_TYPE_SC) AS BL_TYPE_SC
+			                     , ODBL.MBL_NO
+                                 , SR_OD.SR_NO
+                                 
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_PIECES
+			                                WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_PIECES
+			                                WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.PIECES
+			                                ELSE 0 END) AS PIECES /* 예약수량 */
+			                     
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_GWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_GWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_GWT
+			                                ELSE 0 END) AS MASTER_GWT
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_VWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_VWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_VWT
+			                                ELSE 0 END) AS MASTER_VWT
+                                            
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_CWT
+			                                ELSE 0 END) AS MASTER_CWT
+                                            
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' THEN OD.BK_CWT
+			                                ELSE 0 END) AS HOUSE_CWT
+                                            
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND RATE.APPLY_RANGE = 'Min' THEN NVL(RATE.FREIGHT_CHARGE, 0)
+			                                ELSE   CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_CWT
+			                                            ELSE 0 END * NVL(RATE.FREIGHT_CHARGE, 0) 
+			                                END) AS MASTER_RATE /* 주관사업부 금액 */
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND RATE.APPLY_RANGE = 'Min' THEN NVL(RATE.FREIGHT_CHARGE, 0)
+			                                ELSE   CASE WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'M' THEN OD.BK_CWT
+			                                            ELSE 0 END * NVL(RATE.SALES_RATE, 0)
+			                                END) AS MASTER_SALES_RATE /* 사업부 금액 */
+			                                
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND RATE.APPLY_RANGE = 'Min' THEN NVL(RATE.FREIGHT_CHARGE, 0)
+			                                ELSE   CASE WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.AIRLINE_GWT, 0) + NVL(OD.AIRLINE_VWT, 0) + NVL(OD.AIRLINE_CWT, 0) > 0 THEN OD.AIRLINE_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' AND NVL(OD.WAS_GWT, 0) + NVL(OD.WAS_VWT, 0) + NVL(OD.WAS_CWT, 0) > 0 THEN OD.WAS_CWT
+			                                            WHEN OD.ORDER_TYPE_MH = 'H' AND OD.BL_TYPE_SC = 'CS' THEN OD.BK_CWT
+			                                            ELSE 0 END * NVL(RATE.FREIGHT_CHARGE, 0)
+			                                END) AS HOUSE_RATE /* HOUSE SELLING */
+                                            
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN RATE.CURRENCY_CODE ELSE NULL END) AS CURRENCY_CODE /* 단가환종 */
+                                 
+			                     , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN NVL(RATE.FREIGHT_CHARGE, 0) ELSE NULL END) AS BUYING_RATE /* 주관부서 BUYING */
+                                            
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN RATE.SALES_RATE ELSE NULL END) AS SALES_RATE /* 판매부서 BUYING */
+                                 
+			                     , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' AND RATE.APPLY_RANGE = 'Min' THEN RATE.APPLY_RANGE ELSE NULL END) AS MIN_DIV
+                                 
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN RATE.LTC_TYPE ELSE NULL END) AS LTC_TYPE
+                                 
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN OPT.NAME_DEFAULT ELSE NULL END) AS OPTION_TYPE
+                                 
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN SR_OD.JOB_NO ELSE NULL END) AS MASTER_JOB_NO
+                                 
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN SR_OD.AIRLINE_REMARKS ELSE NULL END) AS AIRLINE_REMARKS
+                                 
+                                 , MAX(CASE WHEN OD.ORDER_TYPE_MH = 'M' THEN SR_OD.BOOKER_NAME ELSE NULL END) AS BOOKER_NAME
+			                FROM   TB_COM_OD SR_OD
+			                INNER JOIN TB_COM_OD OD ON (SR_OD.SR_NO = OD.SR_NO)
+                            LEFT OUTER JOIN TB_COM_OD_BL ODBL ON (OD.JOB_NO = ODBL.JOB_NO)
+			                LEFT OUTER JOIN TB_COM_OD_FREIGHT_RATE RATE ON (OD.JOB_NO = RATE.JOB_NO)
+                            LEFT OUTER JOIN TB_SMS_CODE_DETAIL OPT ON (OPT.ENT_CODE = SR_OD.ENT_CODE AND OPT.GROUP_CODE = 'ALLOT_OPTION' AND OPT.CODE = RATE.OPTION_TYPE)
+                            LEFT OUTER JOIN TB_SMS_CODE_DETAIL AIR ON (AIR.ENT_CODE = SR_OD.ENT_CODE AND AIR.GROUP_CODE = 'SIGN_AIRLINE' AND AIR.CODE = SR_OD.AIRLINE_CODE)
+			                WHERE  1 = 1
+			                AND    SR_OD.ORDER_TYPE_GAC = 'G'
+			                AND    SR_OD.ORDER_TYPE_MH  = 'M'
+			                AND    SR_OD.BSA_JOB_NO     = :bsaJobNo
+			                GROUP BY SR_OD.BSA_JOB_NO, ODBL.MBL_NO, SR_OD.SR_NO
+			                
+			                UNION ALL
+			                
+			                /* OFF LOAD 된 건 */
+                            SELECT /*+ ORDERED USE_NL(SR_OD OD ODBL RATE OPT AIR) INDEX(SR_OD (BSA_JOB_NO)) */
+                                   'OFF_LOAD' AS TYPE
+                                 , MAX(OD.JOB_NO) AS JOB_NO
+			                     , SR_OD.BSA_JOB_NO
+                                 , MAX(SR_OD.AIRLINE_CODE) AS AIRLINE_CODE
+                                 , MAX(AIR.ETC2) AS AIRLINE_IATA_CODE
+                                 , TO_NCHAR(MAX(OFF.ORIG_CODE)) AS ORIG_CODE
+                                 , TO_NCHAR(MAX(OFF.DEST_CODE)) AS DEST_CODE
+			                     , MAX(SR_OD.BL_TYPE_SC) AS BL_TYPE_SC
+			                     , ODBL.MBL_NO
+                                 , SR_OD.SR_NO
+			                     , SUM(CASE WHEN SR_OD.ORDER_TYPE_MH='M' THEN OFF.OFF_PIECES ELSE 0 END) * -1 AS PIECES /* 예약수량 */
+			                     , SUM(CASE WHEN SR_OD.ORDER_TYPE_MH='M' THEN OFF.OFF_GWT ELSE 0 END)    * -1 AS MASTER_GWT
+			                     , SUM(CASE WHEN SR_OD.ORDER_TYPE_MH='M' THEN OFF.OFF_VWT ELSE 0 END)    * -1 AS MASTER_VWT
+			                     , SUM(CASE WHEN SR_OD.ORDER_TYPE_MH='M' THEN OFF.OFF_CWT ELSE 0 END)    * -1 AS MASTER_CWT
+			                     , 0 AS HOUSE_CWT
+			                     , 0 AS MASTER_RATE /* 주관사업부 금액 */
+			                     , 0 AS MASTER_SALES_RATE /* 사업부 금액 */
+			                     , 0 AS HOUSE_RATE /* HOUSE SELLING */
+                                 , MAX(RATE.CURRENCY_CODE) AS CURRENCY_CODE /* 단가환종 */
+			                     , 0 AS BUYING_RATE /* 주관부서 BUYING */
+                                 , 0 AS SALES_RATE /* 판매부서 BUYING */
+			                     , NULL AS MIN_DIV
+                                 , MAX(RATE.LTC_TYPE) AS LTC_TYPE
+                                 , MAX(OPT.NAME_DEFAULT) AS OPTION_TYPE
+                                 , MAX(SR_OD.JOB_NO) AS MASTER_JOB_NO
+                                 , MAX(SR_OD.AIRLINE_REMARKS) AS AIRLINE_REMARKS
+                                 , MAX(SR_OD.BOOKER_NAME) AS BOOKER_NAME
+			                FROM   TB_COM_OD SR_OD
+                            INNER JOIN TB_COM_OD OD ON (OD.SR_NO = SR_OD.SR_NO)
+                            INNER JOIN TB_FMS_BUP_OFF_CARGO OFF ON (OFF.BUILD_UP_JOB_NO = SR_OD.BSA_JOB_NO AND OD.JOB_NO = OFF.JOB_NO)
+                            LEFT OUTER JOIN TB_COM_OD_BL ODBL ON (OD.JOB_NO = ODBL.JOB_NO)
+			                LEFT OUTER JOIN TB_COM_OD_FREIGHT_RATE RATE ON (OD.JOB_NO = RATE.JOB_NO)
+                            LEFT OUTER JOIN TB_SMS_CODE_DETAIL OPT ON (OPT.ENT_CODE = SR_OD.ENT_CODE AND OPT.GROUP_CODE = 'ALLOT_OPTION' AND OPT.CODE = RATE.OPTION_TYPE)
+                            LEFT OUTER JOIN TB_SMS_CODE_DETAIL AIR ON (AIR.ENT_CODE = SR_OD.ENT_CODE AND AIR.GROUP_CODE = 'SIGN_AIRLINE' AND AIR.CODE = SR_OD.AIRLINE_CODE)
+			                WHERE  1 = 1
+			                AND    SR_OD.ORDER_TYPE_GAC = 'G'
+			                AND    SR_OD.BSA_JOB_NO     = :bsaJobNo
+			                GROUP BY SR_OD.BSA_JOB_NO, ODBL.MBL_NO, SR_OD.SR_NO
+			                
+			                UNION ALL
+			                
+			                /* OFF LOAD 후 추가 된 건 */
+                            SELECT /*+ ORDERED USE_NL(OFF SR_OD OD ODBL RATE OPT AIR) INDEX(SR_OD (BSA_JOB_NO)) */
+                                   'OFF_ADD' AS TYPE
+                                 , MAX(OFF.JOB_NO) AS JOB_NO
+			                     , OFF.BUILD_UP_JOB_NO
+                                 , MAX(SR_OD.AIRLINE_CODE) AS AIRLINE_CODE
+                                 , MAX(AIR.ETC2) AS AIRLINE_IATA_CODE
+                                 , TO_NCHAR(MAX(ODBL.ORIG_CODE)) AS ORIG_CODE
+                                 , TO_NCHAR(MAX(ODBL.DEST_CODE)) AS DEST_CODE
+			                     , MAX(SR_OD.BL_TYPE_SC) AS BL_TYPE_SC
+			                     , ODBL.MBL_NO
+                                 , SR_OD.SR_NO
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH='M' THEN OFF.BUP_PIECES ELSE 0 END) AS PIECES /* 예약수량 */
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH='M' THEN OFF.BUP_GWT ELSE 0 END)    AS MASTER_GWT
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH='M' THEN OFF.BUP_VWT ELSE 0 END)    AS MASTER_VWT
+			                     , SUM(CASE WHEN OD.ORDER_TYPE_MH='M' THEN OFF.BUP_CWT ELSE 0 END)    AS MASTER_CWT
+			                     , 0 AS HOUSE_CWT
+			                     , 0 AS MASTER_RATE /* 주관사업부 금액 */
+			                     , 0 AS MASTER_SALES_RATE /* 사업부 금액 */
+			                     , 0 AS HOUSE_RATE /* HOUSE SELLING */
+                                 , MAX(RATE.CURRENCY_CODE)    AS CURRENCY_CODE /* 단가환종 */
+			                     , 0 AS BUYING_RATE /* 주관부서 BUYING */
+                                 , 0 AS SALES_RATE /* 판매부서 BUYING */
+			                     , NULL AS MIN_DIV
+                                 , MAX(RATE.LTC_TYPE)         AS LTC_TYPE
+                                 , MAX(OPT.NAME_DEFAULT)      AS OPTION_TYPE
+                                 , MAX(SR_OD.JOB_NO)          AS MASTER_JOB_NO
+                                 , MAX(SR_OD.AIRLINE_REMARKS) AS AIRLINE_REMARKS
+                                 , MAX(SR_OD.BOOKER_NAME)     AS BOOKER_NAME
+			                FROM  TB_FMS_BUP_ULD_CARGO OFF
+                            INNER JOIN TB_COM_OD SR_OD ON (OFF.JOB_NO = SR_OD.JOB_NO)
+                            INNER JOIN TB_COM_OD OD ON (OD.SR_NO = SR_OD.SR_NO)
+                            LEFT OUTER JOIN TB_COM_OD_BL ODBL ON (OD.JOB_NO = ODBL.JOB_NO)
+			                LEFT OUTER JOIN TB_COM_OD_FREIGHT_RATE RATE ON (OD.JOB_NO = RATE.JOB_NO)
+                            LEFT OUTER JOIN TB_SMS_CODE_DETAIL OPT ON (OPT.ENT_CODE = SR_OD.ENT_CODE AND OPT.GROUP_CODE = 'ALLOT_OPTION' AND OPT.CODE = RATE.OPTION_TYPE)
+                            LEFT OUTER JOIN TB_SMS_CODE_DETAIL AIR ON (AIR.ENT_CODE = SR_OD.ENT_CODE AND AIR.GROUP_CODE = 'SIGN_AIRLINE' AND AIR.CODE = SR_OD.AIRLINE_CODE)
+			                WHERE  1 = 1
+			                AND    OFF.BUILD_UP_JOB_NO  = :bsaJobNo
+                            AND    OFF.OFF_BUP_YN       = 'Y'
+			                AND    SR_OD.ORDER_TYPE_GAC = 'G'
+			                GROUP BY OFF.BUILD_UP_JOB_NO, ODBL.MBL_NO, SR_OD.SR_NO
+			                
+                            ) TBL
+                            LEFT OUTER JOIN (
+                                            SELECT BUP.BUILD_UP_JOB_NO
+                                                 , OD.SR_NO
+                                                 , SUM(BUP.BUP_PIECES) AS BUP_PIECES
+                                                 , SUM(BUP.BUP_VWT) AS BUP_VWT
+                                                 , SUM(BUP.BUP_GWT) AS BUP_GWT
+                                                 , SUM(BUP.BUP_CWT) AS BUP_CWT
+                                            FROM   TB_FMS_BUP_ULD_CARGO BUP
+                                            INNER JOIN TB_COM_OD OD ON (OD.JOB_NO = BUP.JOB_NO)
+                                            GROUP BY BUP.BUILD_UP_JOB_NO, OD.SR_NO
+                            ) BUILDUP ON (TBL.BSA_JOB_NO = BUILDUP.BUILD_UP_JOB_NO AND TBL.SR_NO = BUILDUP.SR_NO AND TBL.TYPE != 'OFF_LOAD')
+                            LEFT OUTER JOIN TB_COM_OD_APPEND APP ON (APP.JOB_NO = TBL.MASTER_JOB_NO)
+                            
+                            LEFT OUTER JOIN (
+								SELECT OD.JOB_NO
+								     , MAX(OTHER.CURRENCY_CODE) AS CHARGE_CURRENCY_CODE
+								     , SUM(CASE WHEN CHARGE_CODE = 'FSC' THEN OTHER.RATE ELSE 0 END) AS FSC_AMOUNT
+								     , SUM(CASE WHEN CHARGE_CODE = 'SSC' THEN OTHER.RATE ELSE 0 END) AS SSC_AMOUNT
+								     , SUM(CASE WHEN CHARGE_CODE != 'FSC' AND CHARGE_CODE != 'SSC' THEN OTHER.RATE ELSE 0 END) AS OTC_AMOUNT
+								FROM   TB_COM_OD OD
+								INNER JOIN TB_FMS_OBL_CHG_OTHER OTHER ON (OD.OBL_JOB_NO = OTHER.OBL_JOB_NO)
+								GROUP BY OD.JOB_NO                            
+                            ) CHARGE ON (CHARGE.JOB_NO = TBL.JOB_NO)
+                            LEFT OUTER JOIN (
+                                 SELECT JOB_NO
+                                        , LISTAGG((DIM_WIDTH||'x'||DIM_LENGTH||'x'||DIM_HEIGHT||'-'||DIM_PIECES), ', ') WITHIN GROUP(ORDER BY SEQ_NO) SET_DIM
+                                      FROM TB_COM_OD_DIMENSION
+                                     GROUP BY JOB_NO
+                            ) BOOK_DIM ON (BOOK_DIM.JOB_NO = TBL.JOB_NO)
+                            
+                            LEFT OUTER JOIN (
+                                 SELECT JOB_NO
+                                        , LISTAGG((DIM_WIDTH||'x'||DIM_LENGTH||'x'||DIM_HEIGHT||'-'||DIM_PIECES), ', ') WITHIN GROUP(ORDER BY SEQ_NO) SET_DIM
+                                      FROM TB_COM_WAS_DIMENSION
+                                     GROUP BY JOB_NO
+                            ) WAS_DIM ON (WAS_DIM.JOB_NO = TBL.JOB_NO)
+                            
+                            ORDER BY TBL.MBL_NO, TBL.TYPE DESC
+		</sql>
+		<author>LKH</author>
+		<description>BSA Contour 정보 조회</description>
+	</method>
+	
+	<!-- Penalty Rate 저장-->
+	<method>
+		<sql id="savePenaltyRate">
+			UPDATE TB_FMS_BSA_STATUS
+			SET    PENALTY_RATE = :penaltyRate
+			WHERE  BSA_JOB_NO   = :bsaJobNo
+		</sql>
+		<author>LKH</author>
+		<description>Penalty Rate 저장</description>
+	</method>
+	
+	<!-- Penalty Rate 조회 -->
+	<method>
+		<sql id="getPenaltyRate">
+			SELECT DEST_CODE
+			     , NVL(PENALTY_RATE, 0) AS PENALTY_RATE
+			FROM   TB_FMS_BSA_STATUS
+			WHERE  BSA_JOB_NO   = :bsaJobNo
+		</sql>
+		<author>LKH</author>
+		<description>Penalty Rate 조회</description>
+	</method>
+	
+	<!-- Penalty Rate 조회 -->
+	<method>
+		<sql id="getPenaltyHeaderInfo">
+			SELECT BSA.AIRLINE_CODE
+			     , BSA.FLIGHT_NO
+			     , TO_CHAR(ETD_DATE, 'YYYY-MM-DD DAY') AS ETD_DATE
+			     , ETD_TIME
+			     , CASE WHEN (ETA_DATE - ETD_DATE) > 0 THEN '+' ELSE NULL END || (ETA_DATE - ETD_DATE) AS DIFF_DAYS
+			     , TO_CHAR(ETA_DATE, 'YYYY-MM-DD') AS ETA_DATE
+			     , ETA_TIME
+			     , ORIG_CODE
+			     , DEST_CODE
+			     , AIR.ETC2 AS IATA_AIRLINE_CODE
+			     , AIR.ETC2 || '.png' AS IMG_AIRLINE_CODE
+			FROM TB_FMS_BSA_STATUS BSA
+			LEFT OUTER JOIN TB_SMS_CODE_DETAIL AIR ON (AIR.ENT_CODE   = BSA.ENT_CODE 
+			                                       AND AIR.GROUP_CODE = 'SIGN_AIRLINE' 
+			                                       AND AIR.CODE       = BSA.AIRLINE_CODE)
+			WHERE  BSA_JOB_NO   = :bsaJobNo
+		</sql>
+		<author>LKH</author>
+		<description>Penalty Rate 조회</description>
+	</method>
+	
+	<!-- EQ Penalty Report 목록조회 -->
+	<method>
+		<sql id="getEqPenaltyList">
+			SELECT 
+			       ROW_NUMBER() OVER (ORDER BY TBL.ETD_DATE, TBL.BSA_JOB_NO, TBL.BSA_NUM, TBL.ULD_NUM) AS NUM
+			     , COUNT(1) OVER () AS TOTAL 
+			     , TBL.BSA_JOB_NO
+			     , TO_CHAR(TBL.ETD_DATE, 'YYYYMMDD')                      AS ETD_DATE
+			     , DECODE(TBL.BSA_NUM, 1, TBL.ETD_DATE            , NULL) AS FLIGHT_DATE
+			     , DECODE(TBL.BSA_NUM, 1, TBL.AIRLINE_CODE        , NULL) AS AIRLINE_CODE
+			     , DECODE(TBL.BSA_NUM, 1, AIR.ETC2 || '.png'      , NULL) AS LOGO_IMG_NAME
+			     , DECODE(TBL.BSA_NUM, 1, AIR.ETC2                , NULL) AS ETC2_AIRLINE_CODE
+			     , DECODE(TBL.BSA_NUM, 1, AIR.ETC2 || '-' || TBL.AIRLINE_CODE, NULL) AS AIRLINE_INFO
+			     , DECODE(TBL.BSA_NUM, 1, TBL.FLIGHT_NO           , NULL) AS FLIGHT_NO
+			     , DECODE(TBL.BSA_NUM, 1, TBL.AIRCRAFT_TYPE       , NULL) AS AIRCRAFT_TYPE
+			     , DECODE(TBL.BSA_NUM, 1, CRAFT.NAME_DEFAULT      , NULL) AS AIRCRAFT_NAME
+			     , DECODE(TBL.BSA_NUM, 1, TBL.ORIG_CODE           , NULL) AS ORIG_CODE
+			     , DECODE(TBL.BSA_NUM, 1, TBL.DEST_CODE           , NULL) AS DEST_CODE
+			     , DECODE(TBL.BSA_NUM, 1, TBL.PENALTY_RATE        , NULL) AS PENALTY_RATE
+			     , DECODE(TBL.BSA_NUM, 1, TBL.CONTOUR_NAME_ADDED  , NULL) AS CONTOUR_NAME_ADDED
+			     , DECODE(TBL.BSA_NUM, 1, TBL.ALLOT_MIN_PIVOT_WT  , NULL) AS ALLOT_MIN_PIVOT_WT
+			     , DECODE(TBL.BSA_NUM, 1, TBL.ALLOT_PIVOT_WT      , NULL) AS ALLOT_PIVOT_WT
+			     , CASE WHEN TBL.ULD_TYPE = 'LUZ' THEN 'LUZ'
+			            WHEN TBL.MBL_NO IS NULL THEN NULL
+			            WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.ULD_TYPE    
+			            ELSE NULL END AS ULD_TYPE
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.PREFIX_TEXT    ELSE NULL END AS PREFIX_TEXT_CODE
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN PREFX.NAME_DEFAULT ELSE NULL END AS PREFIX_TEXT
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.ULD_NO         ELSE NULL END AS ULD_NO
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.OWNERSHIP      ELSE NULL END AS OWNERSHIP
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN PREFX.NAME_DEFAULT || ' ' || TBL.ULD_NO || ' ' || TBL.OWNERSHIP   WHEN TBL.ULD_NUM = 1 AND ULD_TYPE = 'LUZ' THEN TO_NCHAR('LUZ')  ELSE NULL END AS ULD_FULL_NO
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.ULD_CONTOUR    ELSE NULL END AS ULD_CONTOUR        /* ULD Contour code */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN CONTR.NAME_DEFAULT ELSE NULL END AS ULD_CONTOUR_NAME   /* ULD Contour name */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.PIVOT_WT       ELSE NULL END AS ULD_PIVOT_WT       /* ULD Pivot WT */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.MIN_PIVOT_WT   ELSE NULL END AS ULD_MIN_PIVOT_WT   /* ULD Min Pivot W/T */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.TARE_WT + TBL.TOT_ULD_GWT ELSE NULL END AS ULD_WT  /* ULD WT TARE + 빌드업 G.WT */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.TARE_WT        ELSE NULL END AS TARE_WT            /* ULD Tare WT */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.TOT_ULD_GWT    ELSE NULL END AS NET_ULD_WT         /* 빌드업 G.WT */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' THEN TBL.TOT_ULD_CWT    ELSE NULL END AS ULD_MAWB_CWT       /* 빌드업 C.WT */
+			     
+			     /* 미사용 ULD Pivot */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_GWT, 0) - NVL(TBL.PIVOT_WT, 0)) ELSE NULL END AS NOT_USE_WT
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_GWT, 0) - NVL(TBL.PIVOT_WT, 0)) * NVL(RATE.FREIGHT_CHARGE, 0) ELSE NULL END AS NOT_USE_PENALTY
+			     
+			     /* Differ */
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_CWT, 0) - NVL(TBL.TOT_ULD_GWT, 0)) ELSE NULL END AS DIFF_WT
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_CWT, 0) - NVL(TBL.TOT_ULD_GWT, 0)) * (NVL(RATE.FREIGHT_CHARGE, 0) + NVL(CHARGE.FSC_AMOUNT, 0) + NVL(CHARGE.SSC_AMOUNT, 0)) ELSE NULL END AS DIFF_PENALTY
+			     
+			     /* Min 미충족 */                                                                
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_GWT, 0) - NVL(TBL.MIN_PIVOT_WT, 0)) ELSE NULL END AS MIN_PIVOT_WT
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_GWT, 0) - NVL(TBL.MIN_PIVOT_WT, 0)) * (NVL(RATE.FREIGHT_CHARGE, 0) + NVL(CHARGE.FSC_AMOUNT, 0) + NVL(CHARGE.SSC_AMOUNT, 0)) ELSE NULL END AS MIN_PIVOT_PENALTY
+			     
+			     /* Pivot 미충족 */                                                              
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_GWT, 0) - NVL(TBL.PIVOT_WT, 0)) ELSE NULL END AS PIVOT_WT
+			     , CASE WHEN TBL.ULD_NUM = 1 AND ULD_TYPE != 'LUZ' AND TBL.MBL_NO IS NOT NULL THEN (NVL(TBL.TOT_ULD_GWT, 0) - NVL(TBL.PIVOT_WT, 0)) * (NVL(RATE.FREIGHT_CHARGE, 0) + NVL(CHARGE.FSC_AMOUNT, 0) + NVL(CHARGE.SSC_AMOUNT, 0)) ELSE NULL END AS PIVOT_PENALTY
+			     
+			     , TBL.MBL_NO
+			     , TBL.BL_DEST_CODE
+			     , CASE WHEN TBL.MBL_NO IS NULL THEN NULL
+			            WHEN TBL.BUP_PIECES = TBL.TOT_PIECES THEN 'T'
+			            ELSE 'P-' || TBL.MBL_NUM || '/' || TBL.TOT_MBL_CNT END AS TOTAL_OR_PARTIAL
+			     , TBL.BUP_PIECES AS LOADING_PCS
+			     , TBL.TOT_PIECES AS TOTAL_PCS
+			     , CASE WHEN TBL.ULD_TYPE != 'LUZ' THEN TBL.BUP_GWT ELSE NULL END AS MAWB_GWT
+			     , CASE WHEN TBL.ULD_TYPE != 'LUZ' THEN TBL.BUP_CWT ELSE NULL END AS MAWB_CWT
+			     , CASE WHEN TBL.ULD_TYPE  = 'LUZ' THEN TBL.BUP_GWT ELSE NULL END AS MAWB_LUZ_GWT
+			     , CASE WHEN TBL.ULD_TYPE  = 'LUZ' THEN TBL.BUP_VWT ELSE NULL END AS MAWB_LUZ_VWT
+			     , CASE WHEN TBL.ULD_TYPE  = 'LUZ' THEN TBL.BUP_CWT ELSE NULL END AS MAWB_LUZ_CWT
+			     , CASE WHEN TBL.MBL_NUM   = 1     THEN TBL.TOT_GWT ELSE NULL END AS MAWB_TOT_GWT
+			     , CASE WHEN TBL.MBL_NUM   = 1     THEN TBL.TOT_CWT ELSE NULL END AS MAWB_TOT_CWT
+			     , CASE WHEN TBL.MBL_NUM   = 1     THEN RATE.FREIGHT_CHARGE ELSE NULL END AS FREIGHT_CHARGE
+			     , RATE.OPTION_TYPE
+			     , CASE WHEN TBL.MBL_NUM   = 1     THEN OPT.NAME_DEFAULT   ELSE NULL END AS OPTION_NAME
+			     , CASE WHEN TBL.MBL_NUM   = 1     THEN CHARGE.FSC_AMOUNT  ELSE NULL END AS FSC_AMOUNT
+			     , CASE WHEN TBL.MBL_NUM   = 1     THEN CHARGE.SSC_AMOUNT  ELSE NULL END AS SSC_AMOUNT
+			     , CASE WHEN TBL.MBL_NUM   = 1     THEN OD.AIRLINE_REMARKS ELSE NULL END AS REMARKS
+			FROM (
+			        SELECT /*+ NO_MERGE(ALLOT) USE_NL(ALLOT) PUSH_PRED(ALLOT) */
+			               EQ_ORG.*
+			             , REPLACE(ALLOT.CONTOUR_NAME, ',', '+') || DECODE(ALLOT.LUZ_WT, 0, NULL, '+' || ALLOT.LUZ_WT || 'kg') AS CONTOUR_NAME_ADDED
+			             , ALLOT.ALLOT_MIN_PIVOT_WT
+			             , ALLOT.ALLOT_PIVOT_WT         
+			             , ROW_NUMBER() OVER (PARTITION BY EQ_ORG.BSA_JOB_NO ORDER BY EQ_ORG.ETD_DATE, DECODE(EQ_ORG.ULD_TYPE, 'LUZ', 1, 0), EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP, EQ_ORG.MBL_NO) AS BSA_NUM
+			             , ROW_NUMBER() OVER (PARTITION BY EQ_ORG.BSA_JOB_NO,EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP ORDER BY EQ_ORG.BSA_JOB_NO, EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP, EQ_ORG.MBL_NO) AS ULD_NUM
+			             , ROW_NUMBER() OVER (PARTITION BY EQ_ORG.BSA_JOB_NO,EQ_ORG.MBL_NO ORDER BY EQ_ORG.BSA_JOB_NO, EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP, EQ_ORG.MBL_NO) AS MBL_NUM
+			             
+			             , (
+			                SELECT OD.JOB_NO
+			                FROM   TB_COM_OD_BL ODBL
+			                INNER JOIN TB_COM_OD OD ON (OD.JOB_NO = ODBL.JOB_NO)
+			                WHERE  ODBL.ENT_CODE     = :entCode
+			                AND    ODBL.MBL_NO       = EQ_ORG.MBL_NO
+			                AND    OD.ORDER_TYPE_MH  = 'M'
+			                AND    OD.ORDER_TYPE_GAC = 'G'
+			                AND    ROWNUM = 1             
+			               ) AS MBL_JOB_NO
+			             
+			             , SUM(1) OVER (PARTITION BY EQ_ORG.BSA_JOB_NO,EQ_ORG.MBL_NO) AS TOT_MBL_CNT
+			
+			             , SUM(BUP_PIECES) OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP) AS TOT_ULD_PIECES
+			             , SUM(BUP_GWT)    OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP) AS TOT_ULD_GWT
+			             , SUM(BUP_CWT)    OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP) AS TOT_ULD_CWT
+			             , SUM(BUP_VWT)    OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.PREFIX_TEXT, EQ_ORG.ULD_NO, EQ_ORG.OWNERSHIP) AS TOT_ULD_VWT
+			
+			             , SUM(BUP_PIECES) OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.MBL_NO) AS TOT_PIECES
+			             , SUM(BUP_GWT)    OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.MBL_NO) AS TOT_GWT
+			             , SUM(BUP_CWT)    OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.MBL_NO) AS TOT_CWT
+			             , SUM(BUP_VWT)    OVER (PARTITION BY EQ_ORG.BSA_JOB_NO, EQ_ORG.MBL_NO) AS TOT_VWT
+			        FROM   (
+			        
+			                SELECT BSA.BSA_JOB_NO
+			                     , MAX(BSA.ETD_DATE)      AS ETD_DATE
+			                     , MAX(BSA.ETD_TIME)      AS ETD_TIME
+			                     , MAX(BSA.AIRLINE_CODE)  AS AIRLINE_CODE
+			                     , MAX(BSA.STATUS)        AS STATUS
+			                     , MAX(BSA.FLIGHT_NO)     AS FLIGHT_NO
+			                     , MAX(BSA.AIRCRAFT_TYPE) AS AIRCRAFT_TYPE
+			                     , MAX(BSA.ORIG_CODE)     AS ORIG_CODE
+			                     , MAX(BSA.DEST_CODE)     AS DEST_CODE
+			                     , MAX(BSA.PENALTY_RATE)  AS PENALTY_RATE
+			                     , DECODE(ULD_STOCK_JOB_NO, 'LUZ', 'LUZ', 'ULD_STOCK') AS ULD_TYPE
+			                     , ULD.PREFIX_TEXT
+			                     , ULD.ULD_NO
+			                     , ULD.OWNERSHIP
+			                     , MAX(ULD.ULD_CONTOUR)  AS ULD_CONTOUR
+			                     , MAX(ULD.PIVOT_WT)     AS PIVOT_WT
+			                     , MAX(ULD.MIN_PIVOT_WT) AS MIN_PIVOT_WT
+			                     , MAX(ULD.TARE_WT)      AS TARE_WT
+			                     , SUM(CARGO.BUP_PIECES) AS BUP_PIECES
+			                     , SUM(CARGO.BUP_GWT)    AS BUP_GWT
+			                     , SUM(CARGO.BUP_CWT)    AS BUP_CWT
+			                     , SUM(CARGO.BUP_VWT)    AS BUP_VWT
+			                     , ODBL.MBL_NO
+			                     , MAX(ODBL.DEST_CODE)   AS BL_DEST_CODE
+			                FROM   TB_FMS_BSA_STATUS BSA
+			                LEFT OUTER JOIN TB_FMS_BUP_ULD ULD ON (ULD.BUILD_UP_JOB_NO = BSA.BSA_JOB_NO)
+			                LEFT OUTER JOIN TB_FMS_BUP_ULD_CARGO CARGO ON (CARGO.BUILD_UP_JOB_NO = ULD.BUILD_UP_JOB_NO AND CARGO.ULD_SEQ = ULD.ULD_SEQ)
+			                LEFT OUTER JOIN TB_COM_OD_BL ODBL ON (ODBL.JOB_NO = CARGO.JOB_NO)
+			                LEFT OUTER JOIN TB_SMS_CODE_DETAIL DPORT ON (DPORT.ENT_CODE = :entCode AND DPORT.GROUP_CODE = 'CITY_PORT' AND DPORT.CODE = BSA.DEST_CODE)
+			                WHERE  BSA.ENT_CODE          = :entCode
+			                AND    BSA.ENT_BUSINESS_CODE = :entBusinessCode
+			                AND    BSA.ETD_DATE BETWEEN TO_DATE(:srchStartDate, :format) AND TO_DATE(:srchEndDate, :format)
+			                AND    BSA.AIRLINE_CODE      = :srchAirlineCode
+			                
+			                #whereInner#
+			                
+			                GROUP BY BSA.BSA_JOB_NO, DECODE(ULD_STOCK_JOB_NO, 'LUZ', 'LUZ', 'ULD_STOCK'), ULD.PREFIX_TEXT, ULD.ULD_NO, ULD.OWNERSHIP, ODBL.MBL_NO
+			                
+			        ) EQ_ORG
+			        LEFT OUTER JOIN (
+			                        SELECT BSA_JOB_NO
+			                             /* , WM_CONCAT( CASE WHEN ULD_POSITION != 'P99' THEN ULD_CNT || 'X' || TO_CHAR(B.NAME_DEFAULT) ELSE NULL END) AS CONTOUR_NAME oracle 12c 이후 버전 사용 못함 */
+			                             , REGEXP_REPLACE(LISTAGG (( CASE WHEN ULD_POSITION != 'P99' THEN ULD_CNT || 'X' || TO_CHAR(B.NAME_DEFAULT) ELSE NULL END), ',') WITHIN GROUP (ORDER BY ( CASE WHEN ULD_POSITION != 'P99' THEN ULD_CNT || 'X' || TO_CHAR(B.NAME_DEFAULT) ELSE NULL END)), '([^,]+)(,\1)+', '\1') AS CONTOUR_NAME
+			                             , SUM(CASE WHEN ULD_POSITION  = 'P99' THEN VWT ELSE 0 END) AS LUZ_WT
+			                             , SUM(CASE WHEN ULD_POSITION != 'P99' THEN GWT ELSE 0 END) AS ALLOT_MIN_PIVOT_WT
+			                             , SUM(CASE WHEN ULD_POSITION != 'P99' THEN VWT ELSE 0 END) AS ALLOT_PIVOT_WT
+			                        FROM   TB_FMS_BSA_ALLOTMENTS A
+			                        LEFT OUTER JOIN TB_SMS_CODE_DETAIL B ON (B.ENT_CODE = :entCode AND B.GROUP_CODE = 'ULD_CONTOUR' AND B.CODE = A.ULD_CONTOUR)
+			                        GROUP BY BSA_JOB_NO
+			                        ) ALLOT ON (ALLOT.BSA_JOB_NO = EQ_ORG.BSA_JOB_NO)
+			     ) TBL
+			     LEFT OUTER JOIN TB_SMS_CODE_DETAIL AIR   ON (AIR.ENT_CODE     = :entCode AND AIR.GROUP_CODE   = 'SIGN_AIRLINE'  AND AIR.CODE   = TBL.AIRLINE_CODE)
+			     LEFT OUTER JOIN TB_SMS_CODE_DETAIL CRAFT ON (CRAFT.ENT_CODE   = :entCode AND CRAFT.GROUP_CODE = 'AIRCRAFT_TYPE' AND CRAFT.CODE = TBL.AIRCRAFT_TYPE)
+			     LEFT OUTER JOIN TB_SMS_CODE_DETAIL PREFX ON (PREFX.ENT_CODE   = :entCode AND PREFX.GROUP_CODE = 'ULD_PRE_TEXT'  AND PREFX.CODE = TBL.PREFIX_TEXT)
+			     LEFT OUTER JOIN TB_SMS_CODE_DETAIL CONTR ON (CONTR.ENT_CODE   = :entCode AND CONTR.GROUP_CODE = 'ULD_CONTOUR'   AND CONTR.CODE = TBL.ULD_CONTOUR)
+			     
+			     LEFT OUTER JOIN TB_COM_OD_FREIGHT_RATE RATE ON (RATE.JOB_NO   = TBL.MBL_JOB_NO)
+			     LEFT OUTER JOIN TB_SMS_CODE_DETAIL OPT   ON (OPT.ENT_CODE = :entCode AND OPT.GROUP_CODE = 'ALLOT_OPTION' AND OPT.CODE = RATE.OPTION_TYPE)
+			     LEFT OUTER JOIN TB_COM_OD OD             ON (OD.JOB_NO        = TBL.MBL_JOB_NO)
+			     LEFT OUTER JOIN (
+			         SELECT OD.JOB_NO
+			              , MAX(OTHER.CURRENCY_CODE) AS CHARGE_CURRENCY_CODE
+			              , SUM(CASE WHEN CHARGE_CODE  = 'FSC' THEN OTHER.RATE ELSE 0 END) AS FSC_AMOUNT
+			              , SUM(CASE WHEN CHARGE_CODE  = 'SSC' THEN OTHER.RATE ELSE 0 END) AS SSC_AMOUNT
+			              , SUM(CASE WHEN CHARGE_CODE != 'FSC' AND CHARGE_CODE != 'SSC' THEN OTHER.RATE ELSE 0 END) AS OTC_AMOUNT
+			         FROM   TB_COM_OD OD
+			         INNER JOIN TB_FMS_OBL_CHG_OTHER OTHER ON (OD.OBL_JOB_NO = OTHER.OBL_JOB_NO)
+			         GROUP BY OD.JOB_NO                            
+			     ) CHARGE ON (CHARGE.JOB_NO = TBL.MBL_JOB_NO)
+		</sql>
+		<author>LKH</author>
+		<description>EQ Penalty Report 목록조회</description>
+	</method>
+	
+	<!-- Total Contour Info 목록조회 -->
+	<method>
+		<sql id="getTotalContourInfo">
+	        /* SELECT REPLACE(WM_CONCAT( SUM(ULD_CNT) || 'X' || TO_CHAR(B.NAME_DEFAULT)), ',', ' + ') AS CONTOUR_NAME oracle 12c 이후 버전 사용 못함 */
+	        SELECT REPLACE(   REGEXP_REPLACE(LISTAGG (SUM(ULD_CNT) || 'X' || TO_CHAR(B.NAME_DEFAULT), ',') WITHIN GROUP (ORDER BY SUM(ULD_CNT) || 'X' || TO_CHAR(B.NAME_DEFAULT)), '([^,]+)(,\1)+', '\1')   , ',', ' + ') AS CONTOUR_NAME
+	        FROM   TB_FMS_BSA_STATUS BSA
+	        INNER  JOIN TB_FMS_BSA_ALLOTMENTS ALLOTS ON (ALLOTS.BSA_JOB_NO = BSA.BSA_JOB_NO)
+	        LEFT   OUTER JOIN TB_SMS_CODE_DETAIL B ON (B.ENT_CODE = :entCode AND B.GROUP_CODE = 'ULD_CONTOUR' AND B.CODE = ALLOTS.ULD_CONTOUR)
+	        LEFT   OUTER JOIN TB_SMS_CODE_DETAIL DPORT ON (DPORT.ENT_CODE = :entCode AND DPORT.GROUP_CODE = 'CITY_PORT' AND DPORT.CODE = BSA.DEST_CODE)
+            WHERE  BSA.ENT_CODE          = :entCode
+            AND    BSA.ENT_BUSINESS_CODE = :entBusinessCode
+            AND    BSA.ETD_DATE BETWEEN TO_DATE(:srchStartDate, :format) AND TO_DATE(:srchEndDate, :format)
+            AND    BSA.AIRLINE_CODE      = :srchAirlineCode
+            AND    ALLOTS.ULD_POSITION  != 'P99'
+            
+            #whereInner#
+            
+            GROUP BY B.NAME_DEFAULT
+		</sql>
+		<author>LKH</author>
+		<description>EQ Penalty Report 목록조회</description>
+	</method>
+	
+	<!-- Total Contour Info 목록조회 -->
+	<method>
+		<sql id="getContractContourList">
+            SELECT BSA.AIRLINE_CODE
+                 , BSA.ETD_DATE
+                 , ALLOTS.ULD_POSITION
+                 , MAX(C.NAME_DEFAULT) AS ULD_POSITION_NAME
+                 , B.NAME_DEFAULT      AS CONTOUR_NAME
+                 , SUM(ALLOTS.ULD_CNT) AS ULD_CNT
+                 , SUM(ALLOTS.GWT)     AS MIN_PIVOT_WT
+                 , SUM(ALLOTS.VWT)     AS PIVOT_WT
+            FROM   TB_FMS_BSA_STATUS BSA
+            INNER JOIN TB_FMS_BSA_ALLOTMENTS ALLOTS ON (ALLOTS.BSA_JOB_NO = BSA.BSA_JOB_NO)
+            LEFT OUTER JOIN TB_SMS_CODE_DETAIL B ON (B.ENT_CODE = :entCode AND B.GROUP_CODE = 'ULD_CONTOUR' AND B.CODE = ALLOTS.ULD_CONTOUR)
+            LEFT OUTER JOIN TB_SMS_CODE_DETAIL C ON (C.ENT_CODE = :entCode AND C.GROUP_CODE = 'ULD_POSITION' AND C.CODE = ALLOTS.ULD_POSITION)
+            LEFT OUTER JOIN TB_SMS_CODE_DETAIL DPORT ON (DPORT.ENT_CODE = :entCode AND DPORT.GROUP_CODE = 'CITY_PORT' AND DPORT.CODE = BSA.DEST_CODE)
+            WHERE  BSA.ENT_CODE          = :entCode
+            AND    BSA.ENT_BUSINESS_CODE = :entBusinessCode
+            AND    BSA.ETD_DATE BETWEEN TO_DATE(:srchStartDate, :format) AND TO_DATE(:srchEndDate, :format)
+            AND    BSA.AIRLINE_CODE      = :srchAirlineCode
+            
+            #whereInner#
+            
+            GROUP BY BSA.AIRLINE_CODE, BSA.ETD_DATE, ALLOTS.ULD_POSITION, B.NAME_DEFAULT
+            ORDER BY ETD_DATE, ULD_POSITION, CONTOUR_NAME
+            
+		</sql>
+		<author>LKH</author>
+		<description>EQ Penalty Report 목록조회</description>
+	</method>
+	
+	<method>
+		<sql id="reserveInfoCount">
+			SELECT COUNT(*) CNT
+			  FROM TB_COM_OD
+			 WHERE 1=1
+			   AND ENT_CODE          = :entCode
+			   AND ENT_BUSINESS_CODE = :entBusinessCode
+			   AND BSA_JOB_NO 		 = :bsaJobNo
+		</sql>
+		<author>HSM</author>
+		<description>예약정보 체크</description>
+	</method>
+	
+	<method>
+		<sql id="buildUpUldChk">
+			SELECT CASE WHEN COUNT(*) = 0 THEN 'N' ELSE 'Y' END CHK_YN
+              FROM TB_FMS_BUP_ULD 
+             WHERE ENT_CODE 		 = :entCode
+               AND ENT_BUSINESS_CODE = :entBusinessCode
+               AND BUILD_UP_JOB_NO   = :bsaJobNo
+		</sql>
+		<author>HSM</author>
+		<description>빌드업 작업여부 체크</description>
+	</method>
+	
+	<method>
+		<sql id="deleteBuildUp">
+			DELETE FROM TB_FMS_BUP 
+             WHERE ENT_CODE 		 = :entCode
+               AND ENT_BUSINESS_CODE = :entBusinessCode
+               AND BUILD_UP_JOB_NO   = :bsaJobNo
+		</sql>
+		<author>HSM</author>
+		<description>빌드업 작업 관리 삭제</description>
+	</method>
+	
+	<method>
+		<sql id="getBsaJobNoList">
+			SELECT BSA_JOB_NO
+	          FROM TB_FMS_BSA_STATUS
+	         WHERE ENT_CODE			 = :entCode
+	           AND ENT_BUSINESS_CODE = :entBusinessCode
+	           AND ALLOTMENT_JOB_NO	 = :allotmentJobNo
+		</sql>	
+		<author>HSM</author>
+		<description>bsa job 번호 조회</description>
+	</method>
+	
+	<method>
+		<sql id="getBsaStatusChk">
+			SELECT count(bs.bsa_job_no) bsa_cnt
+		     	 , count(od.job_no) od_cnt
+		     	 , BS.ALLOTMENT_JOB_NO
+		      FROM tb_fms_bsa_status bs
+		  	  LEFT JOIN tb_com_od od 
+		        ON bs.ent_code 			= :entCode
+		       AND bs.ent_business_code = :entBusinessCode
+		       AND bs.bsa_job_no 		= od.bsa_job_no
+		     WHERE BS.ALLOTMENT_JOB_NO 	= :allotmentJobNo
+		     GROUP BY bs.allotment_job_no		
+		</sql>
+	</method>
+	
+	<method>
+		<sql id="saveCodeDefine">
+			INSERT INTO 
+				code_define
+				   ( code
+				   , code_type 
+				   , code_kr
+				   , code_en
+				   , code_cn
+				   , code_ja
+				   )
+		     VALUES( :code
+				   , :codeType
+				   , :codeKr
+				   , :codeEn
+				   , :codeCn
+				   , :codeJa
+				   )
+		</sql>
+		<author>westGone</author>
+		<description>DII 다국어 CODE 저장</description>
+	</method>
+
+	<method>
+		<sql id="getMessageLang">
+			SELECT *
+			  FROM code_define
+			 WHERE 1=1
+			   AND code = :code
+			   AND code_type = :codeType
+		</sql>
+		<author>westGone</author>
+		<description>사용자가 선택한 언어의 Message 호출</description>
+	</method>
+
+</sqlList>

@@ -1,65 +1,54 @@
 /* Settings 화면을 Control 하는 JS */
 
-
-function CC0001_000_nameDefaultOnClick(){
-	//메시지명(KOR)의 값이 없을때만 돌게하여 중복 검색을 막는다.
-	if($("#SMS_CC0001_000_nameDefault").val()!=""){
-		
-		var params = new Object();
-		params.beforeTranslation =  $("#SMS_CC0001_000_nameDefault").val();
+/* Code 저장 Function */ 
+function codeTransSaveBtn_click(){
+	if($("#settings_code").val()!=""){
+		var params = getFormDataToMaps([ {screen:'settings', form:settings_entryForm}]);
 		
 		$.ajax({
 			type:'post',
-		    url: "/common/translation.do",
-		    data: params,
+		    url: "/common/saveCodeDefine.do",
+			data: params,
+			dataType : "json",
+			cache:false,
+			async:true,
 		    success: function(res) {
-		    	$("#SMS_CC0001_000_nameKor").val($("#SMS_CC0001_000_nameDefault").val());
-		    	$("#SMS_CC0001_000_nameEng").val(res.en.message.result.translatedText);
-		    	$("#SMS_CC0001_000_nameChi").val(res.cn.message.result.translatedText);
-		    	$("#SMS_CC0001_000_nameJpn").val(res.ja.message.result.translatedText);
-		    	$("#SMS_CC0001_000_nameSpa").val(res.es.message.result.translatedText);
-		    	$("#SMS_CC0001_000_nameVie").val(res.vi.message.result.translatedText);
+				messageLang("A0001", "Alert");
 		    },
 		    error:function(e) {
-		    	loading(0);
-		    	messageLang([{id:'A00001'}], "Error");
+		    	messageLang("A0000", "Error");
 	        }
 		});
 	}else{
-    	loading(0);
-    	messageLang([{id:'A01210'}], "Error");
+    	messageLang("A0002", "Error");
 	}
 }
+/* Code 번역 Function */
+function codeTransBtn_click(){
+	if($("#settings_codeKr").val()!=""){
+		var params = new Object();
+		params.beforeTranslation =  $("#settings_codeKr").val();
+		
+		$.ajax({
+			type:'post',
+		    url: "/trans/translation.do",
+			data: params,
+			dataType : "json",
+			cache:false,
+			async:true,
+		    success: function(res) {
+				messageLang("A0001", "Alert");
+				
+		    	$("#settings_codeEn").val(res.en.message.result.translatedText);
+		    	$("#settings_codeCn").val(res.cn.message.result.translatedText);
+		    	$("#settings_codeJa").val(res.ja.message.result.translatedText);
 
-function booking_000_checkMbl(mblNo){
-	if(mblNo == ""){
-		messageLang([{id:'A01238'}], "Error");
-		return false;
+		    },
+		    error:function(e) {
+		    	messageLang("A0000", "Error");
+	        }
+		});
+	}else{
+    	messageLang("A0002", "Error");
 	}
-	var params 		= new Object();
-	var returnValue = false;
-	//기본 정보 Setting
-	params.srchEntCode 	= userEntCode;
-	params.srchMblNo	= mblNo;
-
-	$.ajax({
-		type: "post",
-		url:"/g-one/fms/BookingOperation/checkMblNo.do",
-		data: params,
-		dataType : "json",
-		cache:false,
-		async:false,
-		success:function(res) {
-			if(res.data[0].COUNT > 0){
-				messageLang([{id:'A01239'}], "Error");
-				returnValue = false;
-			}else{
-				returnValue = true;
-			}
-		},
-		error:function(e) {
-			messageLang([{id:'A00001'}], "Error");
-		}
-	});
-	return returnValue;
 }

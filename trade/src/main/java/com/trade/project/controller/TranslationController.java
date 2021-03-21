@@ -30,14 +30,14 @@ public class TranslationController {
 	 * @param response
 	 * @throws Exception
 	 */
-	@RequestMapping(value="/common/translation.do")
+	@RequestMapping(value="/trans/translation.do")
 	public void translation(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
 		JSONObject resJsonObject = new JSONObject();
 		
 		Map<String, Object> reqMap = GlobalUtil.convertMapArrayToObject(request.getParameterMap());
 		
-		String[] transList = {"en","zh-CN","ja","es","vi"};//번역할 언어값 설정 (zh-CN = 중국어 간체)
+		String[] transList = {"en","zh-CN","ja"};//번역할 언어값 설정 (zh-CN = 중국어 간체)
         String clientId = "Xv9lpWUKqRAs_INxoic1";//애플리케이션 클라이언트 아이디값
         String clientSecret = "sRxRqeB2Ro";//애플리케이션 클라이언트 시크릿값
         

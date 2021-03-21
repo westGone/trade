@@ -39,6 +39,7 @@ $(document).ready(function() {
      * Notifications
      */
     function notify(from, align, icon, type, animIn, animOut){
+	console.log(from, align, icon, type, animIn, animOut);
         $.growl({
             icon: icon,
             title: ' Bootstrap Growl ',
