@@ -7,7 +7,24 @@ $("#mainChangeScreen").load("index");
 main_action();
 
 function main_action(){
-	document.getElementById("mainLeftSettings").onclick = function() {
-		$("#mainChangeScreen").load("settings");
+	//Setting 화면 전환
+	document.getElementById("mainLeftSettings").onclick = function() {$("#mainChangeScreen").load("settings");};
+	
+	//게시판 화면 전환
+	document.getElementById("coinBoardBt").onclick = function() {
+		$("#boardType").val("BT");
+		$("#mainChangeScreen").load("coinBoard");
+	};
+	document.getElementById("coinBoardEt").onclick = function() {
+		$("#boardType").val("ET");
+		$("#mainChangeScreen").load("coinBoard");
+	};
+	document.getElementById("coinBoardRp").onclick = function() {
+		$("#boardType").val("RP");
+		$("#mainChangeScreen").load("coinBoard");
+	};
+	document.getElementById("coinBoardOt").onclick = function() {
+		$("#boardType").val("OT");
+		$("#mainChangeScreen").load("coinBoard");
 	};
 }

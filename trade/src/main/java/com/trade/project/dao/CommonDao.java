@@ -17,7 +17,6 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.stereotype.Repository;
 
-import com.trade.project.controller.CommonController;
 import com.trade.project.framework.CommonRowMapper;
 import com.trade.project.framework.Util;
 import com.trade.project.framework.XMLDocParser;

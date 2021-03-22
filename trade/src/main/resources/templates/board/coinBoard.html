@@ -1,0 +1,96 @@
+<form id="coinBoard_entryForm">
+	<div class="pcoded-content">
+	    <!-- Page-header start -->
+	    <div class="page-header">
+	        <div class="page-block">
+	            <div class="row align-items-center">
+	                <div class="col-md-8">
+	                    <div class="page-header-title">
+	                        <h5 class="m-b-10">비트코인 게시판</h5>
+	                        <p class="m-b-0">당신이 받고 있는 투자자문, 불법일 수도 있습니다</p>
+	                    </div>
+	                </div>
+	                <div class="col-md-4">
+	                    <ul class="breadcrumb">
+	                        <li class="breadcrumb-item">
+	                            <a href="main"> <i class="fa fa-home"></i> </a>
+	                        </li>
+	                        <li class="breadcrumb-item"><a href="#!">Dashboard</a>
+	                        </li>
+	                    </ul>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+		
+		<div class="pcoded-inner-content">
+		    <!-- Main-body start -->
+		    <div class="main-body">
+		        <div class="page-wrapper">
+		            <!-- Page body start -->
+		            <div class="page-body">
+		                <div class="row">
+		                    <div class="col-md-12">
+		                        <div class="card">
+		                            <div class="card-header">
+		                                <h5>비트코인 게시판</h5>
+		                                <!--<span>Add class of <code>.form-control</code> with <code>&lt;input&gt;</code> tag</span>-->
+		                            </div>
+		                            <div class="card-block" style="height: 588px;">
+		                            	<table id="coinBoard_boardList">
+											<thead>
+												<tr>
+													<th>No</th>
+													<th>등록자</th>
+													<th>제목</th>
+													<th>등록일</th>
+													<th>조회</th>
+												</tr>
+											</thead>
+		                            	</table>
+		                            	<div style="text-align:center;">
+											<button id="coinBoard_registBtn" type="button" class="btn btn-primary" data-toggle="modal">작성</button>
+		                            	</div>
+		                            </div>
+		                        </div>
+		                    </div>
+		                </div>
+		            </div>
+		            <!-- Page body end -->
+		        </div>
+		    </div>
+		    <!-- Main-body end -->
+		    <div id="styleSelector">
+		
+		    </div>
+		</div>
+	</div>	   
+	<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">게시글 작성</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				</div>
+				<div class="modal-body">
+					<div class="form-group">
+						<label for="recipient-name" class="col-form-label">제목:</label>
+						<input id="coinBoard_title" type="text" maxlength="50" class="form-control">
+					</div>
+					<div class="form-group">
+						<label for="message-text" class="col-form-label">내용:</label>
+						<textarea id="coinBoard_content" class="form-control" maxlength="1000" style="height: 240px;"></textarea>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button id="coinBoard_saveBtn" type="button" class="btn btn-primary">저장</button>
+					<button id="coinBoard_cancelBtn" type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</form>              
+<!-- Main JS -->
+<script src="/js/board/coinBoard.js"></script>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sqlList>
+	<method>
+		<sql id="getBoardList">
+			SELECT 
+				  bd.seq_no
+				, bd.board_type
+				, bd.title
+				, bd.content
+				, bd.views
+				, bd.register_date_time
+				, bd.register_user_id
+				, @rownum := @rownum+1 AS rnum
+			FROM
+				coin_board as bd, (SELECT @rownum :=0) AS r
+			WHERE
+				bd.board_type = :boardType
+			ORDER BY bd.seq_no DESC
+				
+		</sql>
+		<author>westGone</author>
+		<description>Board List</description>
+	</method>
+	
+	<method>
+		<sql id="saveCodeDefine">
+			INSERT INTO coin_board
+				 (	board_type,
+				 	title,
+				 	content,
+				 	register_date_time,
+				 	register_user_id
+				 )
+			VALUES
+				 (	:boardType,
+				 	:title,
+				 	:content,
+				 	:SYSDATE + (:gmtTime/24),
+				 	:userId
+				 )
+		</sql>
+		<author>westGone</author>
+		<description>게시물 저장</description>
+	</method>
+
+</sqlList>

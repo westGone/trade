@@ -99,4 +99,9 @@ public class main {
 	public String typography() {
 		return "typography";
 	}
+	
+	@RequestMapping(value = "/coinBoard")
+	public String coinBoard() {
+		return "board/coinBoard";
+	}
 }

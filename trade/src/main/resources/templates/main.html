@@ -41,9 +41,12 @@
 	<link rel="stylesheet" type="text/css" href="/css/jquery.mCustomScrollbar.css">
 	<!-- Style.css -->
 	<link rel="stylesheet" type="text/css" href="/css/style.css">
+	<!-- Data Table -->
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
 </head>
 
 <body>
+	<input type="hidden" id="boardType"	tabindex="-1"/>
     <!-- Pre-loader start -->
     <div class="theme-loader">
         <div class="loader-track">
@@ -259,6 +262,46 @@
                                     </a>
                                 </li>
                             </ul>
+                            <div class="pcoded-navigation-label">Board</div>
+                            <ul class="pcoded-item pcoded-left-item">
+                                <li class="pcoded-hasmenu">
+                                    <a href="javascript:void(0)" class="waves-effect waves-dark">
+                                        <span class="pcoded-micon"><i class="ti-layout-grid2-alt"></i><b>BC</b></span>
+                                        <span class="pcoded-mtext">게시판</span>
+                                        <span class="pcoded-mcaret"></span>
+                                    </a>
+                                    <ul class="pcoded-submenu">
+                                        <li class=" ">
+                                            <a href="#!" id="coinBoardBt" class="waves-effect waves-dark">
+                                                <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                                                <span class="pcoded-mtext">비트코인</span>
+                                                <span class="pcoded-mcaret"></span>
+                                            </a>
+                                        </li>
+                                        <li class=" ">
+                                            <a href="#!" id="coinBoardEt" class="waves-effect waves-dark">
+                                                <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                                                <span class="pcoded-mtext">이더리움</span>
+                                                <span class="pcoded-mcaret"></span>
+                                            </a>
+                                        </li>
+                                        <li class="">
+                                            <a href="#!" id="coinBoardRp" class="waves-effect waves-dark">
+                                                <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                                                <span class="pcoded-mtext">리플</span>
+                                                <span class="pcoded-mcaret"></span>
+                                            </a>
+                                        </li>
+                                        <li class=" ">
+                                            <a href="#!" id="coinBoardOt" class="waves-effect waves-dark">
+                                                <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                                                <span class="pcoded-mtext">기타</span>
+                                                <span class="pcoded-mcaret"></span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
                             <div class="pcoded-navigation-label">UI Element</div>
                             <ul class="pcoded-item pcoded-left-item">
                                 <li class="pcoded-hasmenu">
@@ -466,6 +509,8 @@
     <script type="text/javascript" src="/js/jquery-ui/jquery-ui.min.js "></script>
     <script type="text/javascript" src="/js/popper.js/popper.min.js"></script>
     <script type="text/javascript" src="/js/bootstrap/js/bootstrap.min.js "></script>
+	<!-- DataTable -->  
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
     <!-- waves js -->
     <script src="/pages/waves/js/waves.min.js"></script>
     <!-- jquery slimscroll js -->

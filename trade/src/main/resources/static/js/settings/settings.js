@@ -1,5 +1,22 @@
 /* Settings 화면을 Control 하는 JS */
 
+settings_action();
+
+function settings_action(){
+	$('#settings_codeListGrid').DataTable( {
+	    ajax: {
+	        url: '/settings/getCodeDefineList.do',
+			type: 'POST',
+			dataSrc: 'data'
+	    },
+		columns: [
+			{"data": "code"},
+			{"data": "code_type"},
+			{"data": "code_kr"}
+		]
+	});
+}
+
 /* Code 저장 Function */ 
 function codeTransSaveBtn_click(){
 	if($("#settings_code").val()!=""){

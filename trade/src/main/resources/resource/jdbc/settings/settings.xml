@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sqlList>
+	<method>
+		<sql id="getCodeDefineList">
+			SELECT *
+			  FROM code_define
+			 WHERE 1=1
+		</sql>
+		<author>westGone</author>
+		<description>전체 Code 정의 List</description>
+	</method>
+
+</sqlList>
