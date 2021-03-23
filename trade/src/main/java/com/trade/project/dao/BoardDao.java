@@ -7,11 +7,13 @@ import javax.annotation.Resource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
 
+import com.trade.project.framework.CommonRowMapper;
 import com.trade.project.framework.XMLDocParser;
 
 @Repository("boardDao")
@@ -50,5 +52,18 @@ public class BoardDao {
 		// Query Parameter 생성
 		SqlParameterSource namedParameters = new MapSqlParameterSource(value);
 		jdbcTemplate.update(query, namedParameters);
+	}
+
+	public Map<String, Object> getContent(Map<String, Object> value) throws java.lang.Exception {
+		// XML에서 Query문 가져오기
+		String query = "";
+		CommonRowMapper mapper = new CommonRowMapper();
+		query = reader.getSAXDocument("board", "board", "getContent").trim();
+		
+		try{
+			return jdbcTemplate.queryForObject(query, new MapSqlParameterSource(value), mapper);
+		}catch(EmptyResultDataAccessException e){
+			return null;
+		}
 	}
 }

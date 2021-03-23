@@ -61,4 +61,23 @@ public class BoardController {
 		response.setContentType("application/x-json;  charset=UTF-8");
 		response.getWriter().print(resJsonObject);
 	}
+	
+	/**
+	 * 게시물 상세보기
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/board/getContent.do")
+	public void getContent(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
+		JSONObject resJsonObject = new JSONObject();
+		
+		Map<String, Object> value = GlobalUtil.convertMapArrayToObject(request.getParameterMap());
+		
+		boardService.getContent(value, resJsonObject);
+		
+		response.setContentType("application/x-json;  charset=UTF-8");
+		response.getWriter().print(resJsonObject);
+	}
 }

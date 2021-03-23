@@ -4,7 +4,7 @@ settings_action();
 
 function settings_action(){
 	
-	$('#coinBoard_boardList').DataTable({
+	var dataTable = $('#coinBoard_boardList').DataTable({
 		ajax: {
 	        url: '/board/getBoardList.do',
 			type: 'POST',
@@ -12,11 +12,13 @@ function settings_action(){
 			dataSrc: 'data'
 	    },
 		columns: [
-			{"data": "code"},
-			{"data": "code_type"},
-			{"data": "code_kr"},
-			{"data": "code_kr"},
-			{"data": "code_kr"}
+			{"data": "rnum"},
+			{"data": "title"},
+			{"data": "register_user_id"},
+			{"data": "register_date_time",
+				render: function(data) {
+                   return convertDateToStringFormat(data);}},
+			{"data": "views"}
 		]
 	});
 	
@@ -31,10 +33,40 @@ function settings_action(){
 	
 	//Modal Close Function
 	$('#exampleModal').on('hide.bs.modal', function (e) {
+		inputboxStyleChange("coinBoard_title"	, false);
+		inputboxStyleChange("coinBoard_content"	, false);
 		$("#coinBoard_title").val("");
 		$("#coinBoard_content").val("");
 	});
 	
+	//DataTable 더블클릭 Function
+	$('#coinBoard_boardList tbody').on('dblclick', 'tr', function () {
+		
+		var data 			= dataTable.row( this ).data();
+		var params 			= new Object();
+		params.seqNo		= data.seq_no;
+		params.boardType	= $("#boardType").val();
+		
+		$.ajax({
+			type:'post',
+		    url: "/board/getContent.do",
+			data: params,
+			dataType : "json",
+			cache:false,
+			async:true,
+		    success: function(res) {
+				inputboxStyleChange("coinBoard_title"	, true);
+				inputboxStyleChange("coinBoard_content"	, true);
+				$("#coinBoard_title").val(res.data.TITLE);
+				$("#coinBoard_content").val(res.data.CONTENT);
+				$('#exampleModal').modal('show');
+		    },
+		    error:function(e) {
+		    	messageLang("A0000", "Error");
+		    }
+		});
+		
+	});
 }
 
 /*
@@ -57,6 +89,7 @@ function coinBoard_saveConten(){
 	params.content 		= $("#coinBoard_content").val();
 	params.boardType	= $("#boardType").val();
 	params.userId		= "관리자";
+	params.gmtTime		= gmtTime;
 	
 	$.ajax({
 		type:'post',
@@ -67,10 +100,7 @@ function coinBoard_saveConten(){
 		async:true,
 	    success: function(res) {
 			messageLang("A0001", "Alert");
-			
-	    	$("#settings_codeEn").val(res.en.message.result.translatedText);
-	    	$("#settings_codeCn").val(res.cn.message.result.translatedText);
-	    	$("#settings_codeJa").val(res.ja.message.result.translatedText);
+			$('#coinBoard_boardList').DataTable().ajax.reload(null, false);
 	
 	    },
 	    error:function(e) {

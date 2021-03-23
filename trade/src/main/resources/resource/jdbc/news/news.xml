@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sqlList>
+	<method>
+		<sql id="getNewsCrawlingInfo">
+			SELECT *
+			  FROM news_crawling_info
+			 WHERE 1=1
+		</sql>
+		<author>westGone</author>
+		<description>크롤링을 위한 뉴스 데이터를 가지고온다</description>
+	</method>
+
+</sqlList>

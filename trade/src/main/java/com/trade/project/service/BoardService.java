@@ -61,6 +61,21 @@ public class BoardService {
 		boardDao.saveCodeDefine(value);
 	}
 	
+	/**
+	 * 게시물 상세보기
+	 * @param value
+	 * @param resJsonObject
+	 * @throws java.lang.Exception
+	 */
+	public void getContent(Map<String, Object> value, JSONObject resJsonObject) throws java.lang.Exception {
+		JsonConfig jsonConfig = new JsonConfig();
+		jsonConfig.registerJsonBeanProcessor(java.sql.Date.class, new JsDateJsonBeanProcessor());
+		
+		Map<String, Object> resultMap = boardDao.getContent(value);
+		
+		resJsonObject.put("data", JSONObject.fromObject(resultMap, jsonConfig));
+	}
+	
 }
 
 
