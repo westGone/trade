@@ -10,6 +10,9 @@ function main_action(){
 	//Setting 화면 전환
 	document.getElementById("mainLeftSettings").onclick = function() {$("#mainChangeScreen").load("settings");};
 	
+	//News 화면 전환
+	document.getElementById("newsView").onclick = function() {$("#mainChangeScreen").load("news");};
+	
 	//게시판 화면 전환
 	document.getElementById("coinBoardBt").onclick = function() {
 		$("#boardType").val("BT");

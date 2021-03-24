@@ -23,35 +23,56 @@ import net.sf.json.JSONObject;
 public class NewsController {
 	@Resource(name="newsService")
 	NewsService newsService;
-//	@RequestMapping(value="/g-one/fms/BookingOperation/setBookingInfo.do")
-//	public void setBookingInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
-//		JSONObject jsonObject = new JSONObject();
-//		HttpSession session = request.getSession(true);
-//		String messageId = "";
-//		
-//		String userId = Util.null2str((String) ((Map<String, Object>) session.getAttribute("SESS_USER")).get("USER_ID"));
-//		String userName = Util.null2str((String) ((Map<String, Object>) session.getAttribute("SESS_USER")).get("USER_NAME"));
-//		String gmtTime = Util.null2str( ((Map<String, Object>) session.getAttribute("SESS_BUSINESS")).get("GMT_TIME2"));
-//		
-//		// Booking Data 세팅
-//		Map<String, Object> booking = GlobalUtil.convertMapArrayToObject(request.getParameterMap());
-//		
-//		//messageId = bookingOperationService.saveComOrderInfo(booking, session);
-//		
-//		response.setCharacterEncoding("UTF-8");
-//		response.getWriter().print(messageId);
-//	}
 	
 	@RequestMapping(value="/news/crawlingNews.do")
 	public void crawlingNews(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
-		CrawlingNews parser = new CrawlingNews();
+//		CrawlingNews parser = new CrawlingNews();
 //		parser.run();
-		newsService.getNewsCrawlingInfo();
+		newsService.crawlingNews();
+//		newsService.getNewsCrawlingInfo();
 		JSONObject jsonObject = new JSONObject();
 		
 		response.setContentType("application/x-json;  charset=UTF-8");
 		response.getWriter().print(jsonObject);
+	}
+	
+	/**
+	 * Get News List
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/news/getNewsList.do")
+	public void getNewsList(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
+		JSONObject resJsonObject = new JSONObject();
+		
+		JSONObject reqJsonObject = JSONObject.fromObject(request.getParameter("params"));
+		
+		newsService.getNewsList(reqJsonObject, resJsonObject);
+		
+		response.setContentType("application/x-json;  charset=UTF-8");
+		response.getWriter().print(resJsonObject);
+	}
+	
+	/**
+	 * 뉴스 상세보기
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/news/getNewsDetail.do")
+	public void getNewsDetail(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
+		JSONObject resJsonObject = new JSONObject();
+		
+		Map<String, Object> value = GlobalUtil.convertMapArrayToObject(request.getParameterMap());
+		
+		newsService.getNewsDetail(value, resJsonObject);
+		
+		response.setContentType("application/x-json;  charset=UTF-8");
+		response.getWriter().print(resJsonObject);
 	}
 	
 	@Component

@@ -11,4 +11,59 @@
 		<description>크롤링을 위한 뉴스 데이터를 가지고온다</description>
 	</method>
 
+	<method>
+		<sql id="saveCrawlingNews">
+			INSERT INTO news_detail
+				 (	news_company,
+				 	news_title,
+				 	news_content,
+				 	news_date,
+				 	news_url
+				 )
+			VALUES
+				 (	:company,
+				 	:title,
+				 	:content,
+				 	:regDate,
+				 	:url
+				 )
+		</sql>
+		<author>westGone</author>
+		<description>크롤링된 뉴스 저장</description>
+	</method>
+	
+	<method>
+		<sql id="getNewsList">
+			SELECT 
+				  news.seq
+				, news.news_company
+				, news.news_title
+				, news.news_content
+				, news.news_date
+				, news.news_url
+				, @rownum := @rownum+1 AS rnum
+			FROM
+				news_detail as news, (SELECT @rownum :=0) AS r
+			WHERE 1=1
+			ORDER BY news.seq DESC
+		</sql>
+		<author>westGone</author>
+		<description>Get News List</description>
+	</method>
+	
+	<method>
+		<sql id="getNewsDetail">
+			SELECT
+				  news.news_title
+				, news.news_content
+				, news.news_url
+			FROM
+				news_detail news
+			WHERE 1=1
+			AND news.seq_no = :seqNo
+		</sql>
+		<author>westGone</author>
+		<description>뉴스 상세보기</description>
+	</method>
+	
 </sqlList>

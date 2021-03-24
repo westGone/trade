@@ -1,0 +1,85 @@
+<form id="news_entryForm">
+	<div class="pcoded-content">
+	    <!-- Page-header start -->
+	    <div class="page-header">
+	        <div class="page-block">
+	            <div class="row align-items-center">
+	                <div class="col-md-8">
+	                    <div class="page-header-title">
+	                        <h5 class="m-b-10">가상화폐 뉴스 크롤링</h5>
+	                        <p class="m-b-0">모든 뉴스의 저작권은 각 회사에 있으며 모든 뉴스는 비영리적으로 사용됩니다.</p>
+	                    </div>
+	                </div>
+	                <div class="col-md-4">
+	                    <ul class="breadcrumb">
+	                        <li class="breadcrumb-item">
+	                            <a href="main"> <i class="fa fa-home"></i> </a>
+	                        </li>
+	                        <li class="breadcrumb-item"><a href="#!">Dashboard</a>
+	                        </li>
+	                    </ul>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+		
+		<div class="pcoded-inner-content">
+		    <!-- Main-body start -->
+		    <div class="main-body">
+		        <div class="page-wrapper">
+		            <!-- Page body start -->
+		            <div class="page-body">
+		                <div class="row">
+		                    <div class="col-md-12">
+		                        <div class="card">
+		                            <div class="card-header">
+		                                <h5>뉴스</h5>
+		                                <!--<span>Add class of <code>.form-control</code> with <code>&lt;input&gt;</code> tag</span>-->
+		                            </div>
+		                            <div class="card-block" style="height: 588px;">
+		                            	<table id="news_boardList">
+											<thead>
+												<tr>
+													<th>No</th>
+													<th>제목</th>
+													<th>URL</th>
+													<th>등록일</th>
+												</tr>
+											</thead>
+		                            	</table>
+		                            </div>
+		                        </div>
+		                    </div>
+		                </div>
+		            </div>
+		            <!-- Page body end -->
+		        </div>
+		    </div>
+		    <!-- Main-body end -->
+		    <div id="styleSelector">
+		
+		    </div>
+		</div>
+	</div>	   
+	<div class="modal fade" id="newsModal" tabindex="-1" role="dialog" aria-labelledby="newsModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="newsModalLabel">뉴스 상세보기</h5>
+				</div>
+				<div class="modal-body">
+					<div class="form-group">
+						<label for="recipient-name" class="col-form-label">제목:</label>
+						<input id="news_title" type="text" maxlength="50" class="form-control">
+					</div>
+					<div class="form-group">
+						<label for="message-text" class="col-form-label">내용:</label>
+						<textarea id="news_content" class="form-control" maxlength="1000" style="height: 240px;"></textarea>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</form>              
+<!-- Main JS -->
+<script src="/js/news/news.js"></script>

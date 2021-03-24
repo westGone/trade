@@ -18,6 +18,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.trade.project.dao.NewsDao;
 import com.trade.project.service.NewsService;
 
 class CSVFormat{
@@ -46,9 +47,9 @@ public class CrawlingNews{
 	private Elements ele;// = doc.select("div.article");
 	private BufferedWriter writer;
 	
-	NewsService newsService = new NewsService();
+	NewsDao newsDao = new NewsDao();
 	
-	List<Map<String, Object>> crawlingInfo = newsService.getNewsCrawlingInfo();
+	List<Map<String, Object>> crawlingInfo = newsDao.getNewsCrawlingInfo();
 	
 	SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd");
 	Date now = new Date();

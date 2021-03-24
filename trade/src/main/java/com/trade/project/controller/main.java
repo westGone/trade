@@ -104,4 +104,9 @@ public class main {
 	public String coinBoard() {
 		return "board/coinBoard";
 	}
+	
+	@RequestMapping(value = "/news")
+	public String news() {
+		return "news/news";
+	}
 }
