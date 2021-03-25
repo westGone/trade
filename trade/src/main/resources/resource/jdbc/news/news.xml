@@ -38,8 +38,7 @@
 				  news.seq
 				, news.news_company
 				, news.news_title
-				, news.news_content
-				, news.news_date
+				, DATE_FORMAT( news.news_date, '%Y%m%d' ) as news_date
 				, news.news_url
 				, @rownum := @rownum+1 AS rnum
 			FROM
@@ -60,7 +59,7 @@
 			FROM
 				news_detail news
 			WHERE 1=1
-			AND news.seq_no = :seqNo
+			AND news.seq = :seqNo
 		</sql>
 		<author>westGone</author>
 		<description>뉴스 상세보기</description>

@@ -15,9 +15,9 @@ function news_action(){
 			{"data": "rnum"},
 			{"data": "news_title"},
 			{"data": "news_url"},
-			{"data": "news_date",
-				render: function(data) {
-                   return convertDateToStringFormat(data);}}
+			{"data": "news_date"}
+				//render: function(data) {
+                   //return convertDateToStringFormat(data);}}
 		]
 	});
 	
@@ -32,7 +32,7 @@ function news_action(){
 		
 		var data 			= dataTable.row( this ).data();
 		var params 			= new Object();
-		params.seqNo		= data.seq_no;
+		params.seqNo		= data.seq;
 		
 		$.ajax({
 			type:'post',
