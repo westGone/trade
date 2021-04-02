@@ -14,7 +14,12 @@ function news_action(){
 		columns: [
 			{"data": "rnum"},
 			{"data": "news_title"},
-			{"data": "news_url"},
+			{"data": "news_url",
+				"render": function(data, type, row){
+					if(type=='display'){
+						data = '<a href="'+ data + '"target ="_blank">' + data + '</a>';
+					}
+				return data;}},
 			{"data": "news_date"}
 				//render: function(data) {
                    //return convertDateToStringFormat(data);}}
