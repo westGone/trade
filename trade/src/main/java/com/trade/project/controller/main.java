@@ -109,4 +109,9 @@ public class main {
 	public String news() {
 		return "news/news";
 	}
+	
+	@RequestMapping(value = "/profile")
+	public String profile() {
+		return "profile";
+	}
 }

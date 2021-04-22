@@ -3,11 +3,22 @@
 // 전역 변수 선언
 
 /***************************유저 기초 정보*******************************/
-var userLng 		= "KR";
+
+var userLng 		= "";
 var userName 		= "";
 var userAuth 		= "";
 var gmtTime 		= 9;
 var dateFormat 		= "yyyy-MM-dd";
+
+//다국어 처리
+if(typeof changeUserLng !== 'undefined'){
+	userLng = changeUserLng;
+	
+	// 다국어 선택 메뉴 변경
+	var element = document.getElementsByClassName("selected_language");
+	$("#"+element[0].id).removeClass();
+	$("#main_"+changeUserLng.toLowerCase()).addClass('selected_language');
+}
 
 /***************************공통 함수 선언*******************************/
 /**
@@ -71,7 +82,7 @@ function getFormDataToMaps(objs) {
 	elementObj.gmtTime = gmtTime;
 	elementObj.registerUserId = userId;
 	elementObj.updateUserId = userId;
-	elementObj.userLanguage = userLanguage;
+	elementObj.userLng = userLng;
 	*/
 	return elementObj;
 }
@@ -475,23 +486,82 @@ function inputboxStyleChange(tagName, flag) {
 				var editor = $("#"+tagName).data("kendoEditor");
 				$(editor.body).attr("contenteditable", false);
 				editor.wrapper.find(".k-editor-toolbar").css("display", "none");
-				//editor.wrapper.find("iframe").remove();
-				//$("#"+tagName).css("display", "block");
-				//editor.destroy();
-
 			} else {
-				//if($("#"+tagName).data("kendoEditor") == undefined) {
-					var textarea = $("#"+tagName);
-					var wrapper = textarea.closest(".k-editor");
-					// get decoded textarea value
-					var value = $("<div></div>").html(textarea.val()).text();
-					textarea.show().insertBefore(wrapper).val(value);
-					wrapper.remove();
-					//textarea.kendoEditor();
-					setEditor(tagName, $("#"+tagName).attr("boxValue"));
-				//}
+				var textarea = $("#"+tagName);
+				var wrapper = textarea.closest(".k-editor");
+				// get decoded textarea value
+				var value = $("<div></div>").html(textarea.val()).text();
+				textarea.show().insertBefore(wrapper).val(value);
+				wrapper.remove();
+				setEditor(tagName, $("#"+tagName).attr("boxValue"));
 			}
 		}
 	}
+}
 
+/**
+ * 웹페이지 다국어 처리
+ * 사용언어가 한국어일 경우에는 Default 값을 보여줌(데이터를 가져오지 않는다.)
+ * @param screenCode
+ * @param scriptLabel(Script에서 동적으로 HTML 페이지를 생성할 경우 해당 Label의 class명을 넘겨준다.)
+ */
+function setPageLabels(screenCode, scriptLabel) {
+	var labelList = [];
+	var labelCount = 0;
+	if(userLng == ""){
+		userLng = "KR"
+	}
+	if(scriptLabel == undefined || scriptLabel == null || scriptLabel == "")	scriptLabel = "_label";
+	else																		scriptLabel = "_" + scriptLabel;
+
+	$("." + screenCode + scriptLabel).each(function (index, item) {
+		if($(item).html() != undefined && $(item).html() != null && $(item).html() != "")
+			if(userLng == "KR") {
+				if($(item).attr("msg") == undefined || $(item).attr("msg") == null || $(item).attr("msg") == "") {
+					labelList[labelCount++] = {id: $(item).html()};
+				} else {
+					$(item).html($(item).attr("msg"));
+				}
+			} else {
+				labelList[labelCount++] = {id: $(item).html()};
+			}
+	});
+
+	if(labelList.length > 0) {
+		var labelDataSource = loadLanguageLabel(labelList);
+		$("." + screenCode + scriptLabel).each(function (index, item) {
+			for(var i = 0; i < labelDataSource.length; i++) {
+				var data = labelDataSource[i];
+				if($(item).html() == data.message_id) {
+					$(item).html(data.message_name);
+					break;
+				}
+			}
+		});
+	}
+
+	$("." + screenCode + scriptLabel).css("display","inline");
+};
+
+/**
+ * 다국어 Label 가져오기
+ * @param labelList
+ * @returns {kendo.data.DataSource}
+ */
+function loadLanguageLabel(labelList) {
+	var labelDataSource = null;
+	
+	$.ajax({
+        url: "/common/common/message.do",
+		data: { params: JSON.stringify({param: labelList, userLangType: userLng}) },
+		dataType : "json",
+        type:"post",
+        cache: false,
+        async: false,
+        success: function(res) {
+        	labelDataSource = res.data;
+        }
+    });
+
+	return labelDataSource;
 }

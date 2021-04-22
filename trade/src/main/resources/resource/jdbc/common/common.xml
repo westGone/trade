@@ -1865,5 +1865,16 @@
 		<author>westGone</author>
 		<description>사용자가 선택한 언어의 Message 호출</description>
 	</method>
-
+	
+	<method>
+		<sql id="messageList">
+		 	SELECT 
+		 		code AS message_id, code_#lang# AS message_name 
+		 	FROM code_define
+		 	WHERE code IN (#messageIdList#)
+		</sql>
+		<author>westGone</author>
+		<description>Messsage List Search SQL</description>
+	</method>
+	
 </sqlList>

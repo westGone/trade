@@ -164,6 +164,16 @@ public class NewsService {
 	}
 	
 	/**
+	 * Get Index News List
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	public void getIndexNewsList(JSONObject reqJsonObject, JSONObject resJsonObject) throws java.lang.Exception {
+		commonController.setListData(newsDao.getIndexNewsList(reqJsonObject), resJsonObject);
+	}
+	
+	/**
 	 * 뉴스 상세보기
 	 * @param value
 	 * @param resJsonObject

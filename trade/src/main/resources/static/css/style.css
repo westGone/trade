@@ -9866,6 +9866,11 @@ table.dataTable.dtr-inline.collapsed>tbody>tr>th:first-child:before {
 	height: 15px;
 }
 
+.selected_language {
+	font-weight: 800;
+	color : #448aff;
+}
+
 .proj-progress-card .progress .progress-bar.bg-c-red:after {
 	border: 3px solid #ff5252;
 	-webkit-box-shadow: 0 0 0 5px rgba(255, 82, 82, 0.5), 0 10px 7px 0 rgba(62, 57, 107, 0.18);

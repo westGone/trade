@@ -70,6 +70,16 @@ public class CommonService {
 		commonDao.saveCodeDefine(value);
 	}
 	
+	/**
+	 * 다국어 메세지 가져오기
+	 * @param search
+	 * @param jsonObject
+	 * @throws java.lang.Exception
+	 */
+	public void getMessage(JSONObject search, JSONObject jsonObject) throws java.lang.Exception {
+		jsonObject.put("data", JSONArray.fromObject(commonDao.getMessage(search)));
+	}
+	
 }
 
 

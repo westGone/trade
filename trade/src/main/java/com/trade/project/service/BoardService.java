@@ -42,13 +42,23 @@ public class BoardService {
 	CommonController commonController;
 	
 	/**
-	 * Get Code Administration List
+	 * Get Board List
 	 * @param request
 	 * @param response
 	 * @throws Exception
 	 */
 	public void getBoardList(JSONObject reqJsonObject, JSONObject resJsonObject) throws java.lang.Exception {
 		commonController.setListData(boardDao.getBoardList(reqJsonObject), resJsonObject);
+	}
+	
+	/**
+	 * Get Index Board List
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	public void getIndexBoardList(Map<String, Object> value, JSONObject resJsonObject) throws java.lang.Exception {
+		commonController.setListData(boardDao.getIndexBoardList(value), resJsonObject);
 	}
 
 	/**

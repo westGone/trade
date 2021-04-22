@@ -27,7 +27,7 @@ public class BoardDao {
 	XMLDocParser reader;
 	
 	/**
-	 * Get Was Sub Consol House List
+	 * Get Board List
 	 * @param map
 	 * @return
 	 * @throws java.lang.Exception
@@ -36,6 +36,21 @@ public class BoardDao {
 		StringBuffer where = new StringBuffer();
 		
 		String query = reader.getSAXDocument("board", "board", "getBoardList").trim();
+		
+		SqlParameterSource namedParameters = new MapSqlParameterSource(reqJsonObject);
+		return jdbcTemplate.queryForList(query, namedParameters);
+	}
+	
+	/**
+	 * Get Index Board List
+	 * @param map
+	 * @return
+	 * @throws java.lang.Exception
+	 */
+	public List<Map<String, Object>> getIndexBoardList(Map<String, Object> reqJsonObject) throws java.lang.Exception {
+		StringBuffer where = new StringBuffer();
+		
+		String query = reader.getSAXDocument("board", "board", "getIndexBoardList").trim();
 		
 		SqlParameterSource namedParameters = new MapSqlParameterSource(reqJsonObject);
 		return jdbcTemplate.queryForList(query, namedParameters);

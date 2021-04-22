@@ -115,6 +115,46 @@ public class CommonDao {
 		SqlParameterSource namedParameters = new MapSqlParameterSource(value);
 		jdbcTemplate.update(query, namedParameters);
 	}
+	
+	/**
+	* 다국어 메세지 가져오기
+	* @param search
+	* @return
+	* @throws java.lang.Exception
+	*/
+	@SuppressWarnings("unchecked")
+	public List<Map<String, Object>> getMessage(JSONObject search) throws java.lang.Exception {
+		// XML에서 Query문 가져오기
+		// '폴더명', 'xml파일명', 'sql id'
+		String query = reader.getSAXDocument("common", "common", "messageList").trim();
+		 
+		// 메시지 아이디 추출
+		String messageIds = Util.null2str(search.get("srchMessageId"));
+		
+		messageIds = messageIds.replaceAll("[']", ""); // 홑따옴표 제거
+		 
+		String[] messageArr = messageIds.split("[,]");
+		
+		StringBuffer buf = new StringBuffer();
+		String argName   = "argName";
+		
+		for(int i=0 ; i<messageArr.length ; i++) {
+			if(i != 0){
+				buf.append(", ");
+			}
+			buf.append(":" + argName + (i));
+			search.put(argName + (i), messageArr[i].trim());
+		}
+
+		// 조건에 따른 값 치환
+		query = query.replaceAll("#lang#", Util.null2str(search.get("srchLangType"), "DEFAULT"));
+		query = query.replaceAll("#messageIdList#", buf.toString());
+		 
+		// Query Parameter 생성
+		SqlParameterSource namedParameters = new MapSqlParameterSource(search);
+		 
+		return jdbcTemplate.queryForList(query, namedParameters);
+	}
 }
 
 

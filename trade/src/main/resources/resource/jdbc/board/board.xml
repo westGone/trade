@@ -24,6 +24,28 @@
 	</method>
 	
 	<method>
+		<sql id="getIndexBoardList">
+			SELECT 
+				  bd.seq_no
+				, bd.board_type
+				, bd.title
+				, bd.content
+				, bd.views
+				, DATE_FORMAT( bd.register_date_time, '%Y%m%d' ) as board_date
+				, bd.register_user_id
+				, @rownum := @rownum+1 AS rnum
+			FROM
+				coin_board as bd, (SELECT @rownum :=0) AS r
+			WHERE
+				bd.board_type = :boardType
+			ORDER BY bd.seq_no DESC
+			limit 4
+		</sql>
+		<author>westGone</author>
+		<description>Board List</description>
+	</method>
+	
+	<method>
 		<sql id="saveCodeDefine">
 			INSERT INTO coin_board
 				 (	board_type,

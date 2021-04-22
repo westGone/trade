@@ -43,9 +43,11 @@
 	<link rel="stylesheet" type="text/css" href="/css/style.css">
 	<!-- Data Table -->
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+	<!-- morris chart -->
+    <link rel="stylesheet" type="text/css" href="/css/morris.js/css/morris.css">
 </head>
 
-<body>
+<body id="main_body">
 	<input type="hidden" id="boardType"	tabindex="-1"/>
     <!-- Pre-loader start -->
     <div class="theme-loader">
@@ -142,6 +144,34 @@
                         <ul class="nav-right">
                             <li class="header-notification">
                                 <a href="#!" class="waves-effect waves-light">
+                                    <img src="/images/auth/langauge.png" style="width:40px;" class="img-radius" alt="User-Profile-Image">
+                                </a>
+                                <ul class="show-notification profile-notification" style="width: 135px;">
+                                    <li class="waves-effect waves-light">
+                                        <a id="main_krA" href="#!">
+                                            <span class="selected_language" id="main_kr">한국어</span>
+                                        </a>
+                                    </li>
+                                    <li class="waves-effect waves-light">
+                                        <a id="main_enA" href="#!">
+                                            <span id="main_en">English</span>
+                                        </a>
+                                    </li>
+                                    <li class="waves-effect waves-light">
+                                        <a id="main_cnA" href="#!">
+                                            <span id="main_cn">漢語</span>
+                                        </a>
+                                    </li>
+                                    <li class="waves-effect waves-light">
+                                        <a id="main_jaA" href="#!">
+                                            <span id="main_ja">日本語</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- 
+                            <li class="header-notification">
+                                <a href="#!" class="waves-effect waves-light">
                                     <i class="ti-bell"></i>
                                     <span class="badge bg-c-red"></span>
                                 </a>
@@ -182,6 +212,7 @@
                                     </li>
                                 </ul>
                             </li>
+                             -->
                             <li class="user-profile header-notification">
                                 <a href="#!" class="waves-effect waves-light">
                                     <img src="/images/user-img.jpg" class="img-radius" alt="User-Profile-Image">
@@ -236,7 +267,7 @@
                                 <div class="main-menu-content">
                                     <ul>
                                         <li class="more-details">
-                                            <a href="user-profile"><i class="ti-user"></i>View Profile</a>
+                                            <a id="profile"><i class="ti-user"></i>View Profile</a>
                                             <a id="mainLeftSettings"><i class="ti-settings"></i>Settings</a>
                                             <a href="auth-normal-sign-in"><i class="ti-layout-sidebar-left"></i>Logout</a>
                                         </li>
@@ -252,12 +283,11 @@
                                     </div>
                                 </form>
                             </div>
-                            <div class="pcoded-navigation-label">Navigation</div>
                             <ul class="pcoded-item pcoded-left-item">
                                 <li class="active">
                                     <a href="main" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-home"></i><b>D</b></span>
-                                        <span class="pcoded-mtext">Dashboard</span>
+                                        <span class="pcoded-mtext">Home</span>
                                         <span class="pcoded-mcaret"></span>
                                     </a>
                                 </li>
@@ -267,35 +297,35 @@
                                 <li class="pcoded-hasmenu">
                                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-layout-grid2-alt"></i><b>BC</b></span>
-                                        <span class="pcoded-mtext">게시판</span>
+                                        <span class="pcoded-mtext"><label class="main_label" msg="게시판">C0002</label></span>
                                         <span class="pcoded-mcaret"></span>
                                     </a>
                                     <ul class="pcoded-submenu">
                                         <li class=" ">
                                             <a href="#!" id="coinBoardBt" class="waves-effect waves-dark">
                                                 <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                                                <span class="pcoded-mtext">비트코인</span>
+                                                <span class="pcoded-mtext"><label class="main_label" msg="비트코인">C0003</label></span>
                                                 <span class="pcoded-mcaret"></span>
                                             </a>
                                         </li>
                                         <li class=" ">
                                             <a href="#!" id="coinBoardEt" class="waves-effect waves-dark">
                                                 <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                                                <span class="pcoded-mtext">이더리움</span>
+                                                <span class="pcoded-mtext"><label class="main_label" msg="이더리움">C0004</label></span>
                                                 <span class="pcoded-mcaret"></span>
                                             </a>
                                         </li>
                                         <li class="">
                                             <a href="#!" id="coinBoardRp" class="waves-effect waves-dark">
                                                 <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                                                <span class="pcoded-mtext">리플</span>
+                                                <span class="pcoded-mtext"><label class="main_label" msg="리플">C0006</label></span>
                                                 <span class="pcoded-mcaret"></span>
                                             </a>
                                         </li>
                                         <li class=" ">
                                             <a href="#!" id="coinBoardOt" class="waves-effect waves-dark">
                                                 <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                                                <span class="pcoded-mtext">기타</span>
+                                                <span class="pcoded-mtext"><label class="main_label" msg="기타">C0008</label></span>
                                                 <span class="pcoded-mcaret"></span>
                                             </a>
                                         </li>
@@ -307,7 +337,7 @@
                                 <li class="">
                                     <a href="#!" id="newsView" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-receipt"></i><b>B</b></span>
-                                        <span class="pcoded-mtext">뉴스</span>
+                                        <span class="pcoded-mtext"><label class="main_label" msg="뉴스">C0001</label></span>
                                         <span class="pcoded-mcaret"></span>
                                     </a>
                                 </li>
@@ -387,43 +417,17 @@
                                     </ul>
                                 </li>
                             </ul>
-                            <div class="pcoded-navigation-label">Forms</div>
+                            <div class="pcoded-navigation-label">Chart</div>
                             <ul class="pcoded-item pcoded-left-item">
                                 <li class="">
-                                    <a href="form-elements-component" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-layers"></i><b>FC</b></span>
-                                        <span class="pcoded-mtext">Form</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
-                                </li>
-                            </ul>
-                            <div class="pcoded-navigation-label">Tables</div>
-                            <ul class="pcoded-item pcoded-left-item">
-                                <li class="">
-                                    <a href="bs-basic-table" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-receipt"></i><b>B</b></span>
-                                        <span class="pcoded-mtext">Table</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
-                                </li>
-                            </ul>
-                            <div class="pcoded-navigation-label">Chart And Maps</div>
-                            <ul class="pcoded-item pcoded-left-item">
-                                <li class="">
-                                    <a href="chart-morris" class="waves-effect waves-dark">
+                                    <a href="#!" id="chartMoris" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-bar-chart-alt"></i><b>C</b></span>
-                                        <span class="pcoded-mtext">Charts</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
-                                </li>
-                                <li class="">
-                                    <a href="map-google" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-map-alt"></i><b>M</b></span>
-                                        <span class="pcoded-mtext">Maps</span>
+                                        <span class="pcoded-mtext"><label class="main_label" msg="차트">C0000</label></span>
                                         <span class="pcoded-mcaret"></span>
                                     </a>
                                 </li>
                             </ul>
+                            <!-- 
                             <div class="pcoded-navigation-label">Pages</div>
                             <ul class="pcoded-item pcoded-left-item">
                                 <li class="pcoded-hasmenu ">
@@ -457,6 +461,7 @@
                                     </ul>
                                 </li>
                             </ul>
+                             -->
                         </div>
                     </nav>
                     
@@ -519,6 +524,8 @@
     <script type="text/javascript" src="/js/jquery-ui/jquery-ui.min.js "></script>
     <script type="text/javascript" src="/js/popper.js/popper.min.js"></script>
     <script type="text/javascript" src="/js/bootstrap/js/bootstrap.min.js "></script>
+    <!-- Common JS -->
+    <script src="/js/common/common.js"></script>
 	<!-- DataTable -->  
 	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
     <!-- waves js -->
@@ -538,7 +545,8 @@
     
     <!-- Main JS -->
     <script src="/js/main/main.js"></script>
-    <script src="/js/common/common.js"></script>
+    <!-- Morris Chart js -->
+    <script src="/js/raphael/raphael.min.js"></script>
 </body>
 
 </html>

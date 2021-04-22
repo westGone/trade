@@ -73,6 +73,22 @@ public class NewsDao {
 	}
 	
 	/**
+	 * Get Index News List
+	 * @param map
+	 * @return
+	 * @throws java.lang.Exception
+	 */
+	public List<Map<String, Object>> getIndexNewsList(Map<String, Object> reqJsonObject) throws java.lang.Exception {
+		StringBuffer where = new StringBuffer();
+		
+		String query = reader.getSAXDocument("news", "news", "getIndexNewsList").trim();
+		
+		SqlParameterSource namedParameters = new MapSqlParameterSource(reqJsonObject);
+		List<Map<String, Object>> getNe = jdbcTemplate.queryForList(query, namedParameters);
+		return jdbcTemplate.queryForList(query, namedParameters);
+	}
+	
+	/**
 	 * 뉴스 상세보기
 	 * @param value
 	 * @return

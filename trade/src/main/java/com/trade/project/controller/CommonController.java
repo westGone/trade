@@ -19,7 +19,9 @@ import com.trade.project.framework.Util;
 import com.trade.project.service.CommonService;
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
 
 @Controller
 public class CommonController {
@@ -287,6 +289,18 @@ public class CommonController {
 	}
 	
 	/**
+	 * JSON 데이터 가져오기
+	 * @param json
+	 * @param key
+	 * @return
+	 */
+	public static Object getJSON(String json, String key) {
+        JSONObject jsonObj = JSONObject.fromObject(JSONSerializer.toJSON(json));
+        
+        if (!(jsonObj.get(key) instanceof JSONNull))	return jsonObj.get(key);
+        else											return null;
+	}
+	/**
 	 * 리스트 객체 생성
 	 * @param list
 	 * @param jsonObject
@@ -309,5 +323,39 @@ public class CommonController {
         	jsonObject.put("total", 0);
         	jsonObject.put("data", new JSONArray());
         }
+	}
+	
+	/**
+	 * 다국어 메세지 리스트
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/common/common/message.do")
+	public void getMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Map<String, Object> value 	= GlobalUtil.convertMapArrayToObject(request.getParameterMap());
+		String reqParams 		= request.getParameter("params");
+		JSONArray params 		= (JSONArray) CommonController.getJSON(reqParams, "param");
+		String userLanguage 	= (String) CommonController.getJSON(reqParams, "userLangType");
+		
+		JSONObject search 		= new JSONObject();
+		JSONObject jsonObject 	= new JSONObject();
+		
+		String messageId 		= "";
+		
+		if(params != null) {
+			for(int i = 0; i < params.size(); i++) {
+				JSONObject param = (JSONObject) params.get(i);
+				if(i == 0)	messageId = "'" + param.getString("id") + "'";
+				else		messageId += ", '" + param.getString("id") + "'";
+			}
+			// 검색 조건 세팅
+			search.put("srchLangType", userLanguage);
+			search.put("srchMessageId", Util.null2str(messageId));
+			commonService.getMessage(search, jsonObject);
+		}
+		
+		response.setContentType("application/x-json;  charset=UTF-8");
+		response.getWriter().print(jsonObject);
 	}
 }

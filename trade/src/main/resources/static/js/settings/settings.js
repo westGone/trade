@@ -89,3 +89,24 @@ function codeTransBtn_click(){
     	messageLang("A0002", "Error");
 	}
 }
+
+
+/* DMI Function */ 
+function dmiBtn_click(){
+	var params = getFormDataToMaps([ {screen:'settings', form:settings_entryForm}]);
+		
+	$.ajax({
+		type:'post',
+	    url: "/autoTrade/autoTrade.do",
+		data: params,
+		dataType : "json",
+		cache:false,
+		async:true,
+	    success: function(res) {
+			messageLang("A0001", "Alert");
+	    },
+	    error:function(e) {
+	    	messageLang("A0000", "Error");
+        }
+	});
+}

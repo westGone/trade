@@ -27,10 +27,7 @@ public class NewsController {
 	@RequestMapping(value="/news/crawlingNews.do")
 	public void crawlingNews(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
-//		CrawlingNews parser = new CrawlingNews();
-//		parser.run();
 		newsService.crawlingNews();
-//		newsService.getNewsCrawlingInfo();
 		JSONObject jsonObject = new JSONObject();
 		
 		response.setContentType("application/x-json;  charset=UTF-8");
@@ -79,8 +76,8 @@ public class NewsController {
 	public class Scheduler {
 	   @Scheduled(cron = "59 59 23 * * ?")
 	   public void cronJobSch() throws Exception {
-			CrawlingNews parser = new CrawlingNews();
-			parser.run();
+//			CrawlingNews parser = new CrawlingNews();
+//			parser.run();
 	   }
 	}
 }
