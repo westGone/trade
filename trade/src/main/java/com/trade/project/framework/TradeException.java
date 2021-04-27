@@ -1,28 +1,28 @@
 package com.trade.project.framework;
 
-public class YhtException extends Exception {
+public class TradeException extends Exception {
 	private String msgCode;
 	private String msgAlertYn;
 	private String msgAfter;
 	
-	public YhtException(){
+	public TradeException(){
 		super();
 	}
 	
-	public YhtException(String msgCode){
+	public TradeException(String msgCode){
 		super();
 		
 		this.msgCode = msgCode;
 	}
 	
-	public YhtException(String msgCode, String msgAlertYn){
+	public TradeException(String msgCode, String msgAlertYn){
 		super();
 		
 		this.msgCode    = msgCode;
 		this.msgAlertYn = msgAlertYn;
 	}
 	
-	public YhtException(String msgCode, String msgAlertYn, String msgAfter){
+	public TradeException(String msgCode, String msgAlertYn, String msgAfter){
 		super();
 		
 		this.msgCode    = msgCode;

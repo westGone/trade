@@ -1533,7 +1533,7 @@ public class GlobalUtil {
 				Type[] types = m.getGenericParameterTypes();
 				
 				if(!(types[0].equals(JSONObject.class) && types[1].equals(JSONObject.class))){
-					throw new YhtException("Argument Exception!! needs JSONObject req, JSONObject res");
+					throw new TradeException("Argument Exception!! needs JSONObject req, JSONObject res");
 				}
 				
 				// 조회모드
@@ -1579,7 +1579,7 @@ public class GlobalUtil {
 		
 		// 수행된 메소드가 없음
 		if(!isDone){
-			throw new YhtException("No executable method!!!!");
+			throw new TradeException("No executable method!!!!");
 		}
 	}
 }

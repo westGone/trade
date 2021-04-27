@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sqlList>
+	<method>
+		<sql id="getNewsCrawlingInfo">
+			SELECT *
+			  FROM news_crawling_info
+			 WHERE 1=1
+		</sql>
+		<author>westGone</author>
+		<description>크롤링을 위한 뉴스 데이터를 가지고온다</description>
+	</method>
+
+	<method>
+		<sql id="setOrder">
+			INSERT INTO order_history
+				 (	order_key,
+				 	seq,
+				 	order_type,
+				 	price,
+				 	order_date
+				 )
+			VALUES
+				 (	:orderKey,
+					(
+						SELECT IFNULL(MAX(sub.seq),0)+1       
+				    	FROM order_history as sub
+				    	WHERE sub.order_key = :orderKey        
+			    	),
+				 	:orderType,
+				 	:price,
+				 	SYSDATE()
+				 )
+		</sql>
+		<author>westGone</author>
+		<description>Order Info Save</description>
+	</method>
+	
+	<method>
+		<sql id="getOrderKey">
+			SELECT
+				od.order_key
+			FROM
+				order_history as od
+			WHERE 1=1
+			AND
+				order_type = :orderType
+			ORDER BY
+				od.order_date DESC
+			limit 1
+		</sql>
+		<author>westGone</author>
+		<description>가장 최근의 Order Key를 가져온다</description>
+	</method>
+	
+</sqlList>
